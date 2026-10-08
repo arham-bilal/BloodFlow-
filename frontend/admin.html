@@ -1,0 +1,28 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin — BloodLink</title><link rel="stylesheet" href="css/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script><script src="js/app.js"></script></head><body>
+<div id="nav"></div><main class="wrap"><h1>Admin dashboard</h1>
+<div class="grid" id="cards"><div class="skel"></div><div class="skel"></div></div>
+<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr));margin-top:18px" id="charts"></div>
+<h2>Requests</h2><div class="card" style="overflow-x:auto"><table id="rt"></table></div>
+<h2>Users</h2><div class="card" style="overflow-x:auto"><table id="ut"></table></div>
+<h2>Notification monitor</h2><div class="card" style="overflow-x:auto"><table id="nt"></table></div></main><div id="foot"></div>
+<script>
+const C=["#B91C1C","#EF4444","#0F172A","#F59E0B","#16A34A","#64748B","#F97316","#94A3B8"];
+function chart(title,type,obj){const d=document.createElement("div");d.className="card";
+ d.innerHTML=`<h3>${title}</h3><div style="height:260px"><canvas role="img" aria-label="${title}"></canvas></div>`;$("#charts").appendChild(d);
+ new Chart(d.querySelector("canvas"),{type,data:{labels:Object.keys(obj),datasets:[{data:Object.values(obj),backgroundColor:type==="line"?"rgba(185,28,28,.15)":C,borderColor:"#B91C1C",fill:type==="line",tension:.3}]},
+ options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:type==="doughnut"}}}});}
+async function tables(){const [r,u,n]=await Promise.all([api("/api/admin/requests"),api("/api/admin/users"),api("/api/admin/notifications")]);
+ $("#rt").innerHTML="<tr><th>ID</th><th>Group</th><th>Hospital</th><th>Level</th><th>Status</th><th>Requester</th><th></th></tr>"+r.data.map(x=>`<tr><td>${x.id}</td><td>${esc(x.blood_group)}</td><td>${esc(x.hospital_name)}</td><td><span class="badge ${x.emergency_level}">${x.emergency_level}</span></td><td>${x.status}</td><td>${x.requester_id}</td><td>${x.status==="open"?`<button class="btn sm ghost" onclick="act('/api/admin/requests/${x.id}/status?status=cancelled')">Cancel</button>`:""}</td></tr>`).join("");
+ $("#ut").innerHTML="<tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Active</th><th></th></tr>"+u.data.map(x=>`<tr><td>${x.id}</td><td>${esc(x.name)}</td><td>${esc(x.email)}</td><td>${x.role}</td><td>${x.is_active?"Yes":"No"}</td><td>${x.role==="admin"?"":`<button class="btn sm ghost" onclick="act('/api/admin/users/${x.id}/active?active=${!x.is_active}')">${x.is_active?"Deactivate":"Activate"}</button>`}</td></tr>`).join("");
+ $("#nt").innerHTML="<tr><th>ID</th><th>User</th><th>Request</th><th>Channel</th><th>Status</th><th>Error</th></tr>"+n.data.map(x=>`<tr><td>${x.id}</td><td>${x.user_id}</td><td>${x.request_id}</td><td>${x.channel}</td><td>${x.status}</td><td>${esc(x.error||"")}</td></tr>`).join("");}
+async function act(p){if(!confirm("Are you sure?"))return;try{await api(p,{method:"PATCH"});toast("Updated","success");tables();}catch(e){toast(e.message,"error");}}
+if(requireAuth("admin"))(async()=>{try{const s=(await api("/api/admin/stats")).data;
+ $("#cards").innerHTML=[["Total donors",s.total_donors],["Active donors",s.active_donors],["Total requests",s.total_requests],["Active emergencies",s.active_requests],["Completed",s.completed_requests],["Successful matches",s.successful_matches],["Response rate %",s.response_rate]].map(([l,n])=>`<div class="card"><div class="num" data-count="${n}">0</div>${l}</div>`).join("");
+ document.querySelectorAll("[data-count]").forEach(countUp);
+ chart("Donor blood groups","doughnut",s.donors_by_group);chart("Requests by blood group","bar",s.requests_by_group);
+ chart("Requests by month","line",s.requests_by_month);chart("Completed vs active vs other","doughnut",s.requests_by_status);
+ chart("Emergency requests by area","bar",s.requests_by_area);chart("Donor availability","doughnut",{Available:s.active_donors,Unavailable:s.total_donors-s.active_donors});
+ chart("Notification status","bar",s.notifications_by_status);await tables();
+}catch(e){toast(e.message,"error");}})();
+</script></body></html>

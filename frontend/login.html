@@ -1,0 +1,10 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Login — BloodLink</title><link rel="stylesheet" href="css/style.css"><script src="js/app.js"></script></head><body>
+<div id="nav"></div><main class="wrap narrow"><div class="card"><h1>Login</h1>
+<form id="f"><label for="email">Email</label><input id="email" type="email" required autocomplete="email">
+<label for="pw">Password</label><input id="pw" type="password" required minlength="8" autocomplete="current-password">
+<p><button class="btn" id="b">Login</button></p></form><p>New here? <a href="register.html">Create an account</a></p></div></main><div id="foot"></div>
+<script>$("#f").addEventListener("submit",async e=>{e.preventDefault();$("#b").disabled=true;
+try{const j=await api("/api/auth/login",{method:"POST",body:{email:$("#email").value,password:$("#pw").value}});
+localStorage.setItem("bl_token",j.data.token);localStorage.setItem("bl_role",j.data.role);
+const n=new URLSearchParams(location.search).get("next");location.href=n&&/^[\w\-.]+\.html(\?.*)?$/.test(n)?n:"dashboard.html";}
+catch(err){toast(err.message,"error");$("#b").disabled=false;}});</script></body></html>

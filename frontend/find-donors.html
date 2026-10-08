@@ -1,0 +1,27 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Find Donors — BloodLink</title><link rel="stylesheet" href="css/style.css"><script src="js/app.js"></script></head><body>
+<div id="nav"></div><main class="wrap"><h1>Find nearby donors</h1>
+<p class="notice">Only approximate areas are shown. No names or contact details are public. Create a request to alert donors.</p>
+<form id="f" class="card"><div class="row"><div><label for="bg">Patient blood group</label><select id="bg"></select></div>
+<div><label for="rad">Radius (km)</label><select id="rad"><option>5</option><option selected>10</option><option>20</option><option>50</option></select></div>
+<div><label for="q">Location</label><input id="q" placeholder="Search place…"></div></div>
+<div class="row"><div><label for="lat">Latitude</label><input id="lat" type="number" step="any" required></div><div><label for="lng">Longitude</label><input id="lng" type="number" step="any" required></div></div>
+<label><input type="checkbox" id="av" checked>Available donors only</label>
+<p class="row" style="max-width:340px"><button class="btn">Search</button><button type="button" class="btn ghost" id="geo">Use my location</button></p></form>
+<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr));margin-top:18px"><div id="map" aria-label="Donor map"></div><div id="res" aria-live="polite"></div></div></main><div id="foot"></div>
+<script>
+if(requireAuth()){fillBG($("#bg"));let map,marks=[];
+loadMaps().then(()=>{map=new google.maps.Map($("#map"),{center:{lat:20,lng:0},zoom:2});
+ const ac=new google.maps.places.Autocomplete($("#q"),{fields:["geometry"]});
+ ac.addListener("place_changed",()=>{const p=ac.getPlace();if(!p.geometry)return toast("Invalid location","error");
+  $("#lat").value=p.geometry.location.lat().toFixed(6);$("#lng").value=p.geometry.location.lng().toFixed(6);});
+}).catch(e=>toast("Map unavailable: "+e.message));
+$("#geo").onclick=()=>navigator.geolocation?.getCurrentPosition(p=>{$("#lat").value=p.coords.latitude.toFixed(6);$("#lng").value=p.coords.longitude.toFixed(6);},()=>toast("Could not get location","error"));
+$("#f").addEventListener("submit",async e=>{e.preventDefault();$("#res").innerHTML='<div class="skel"></div><div class="skel"></div><div class="skel"></div>';
+ try{const q=new URLSearchParams({blood_group:$("#bg").value,lat:$("#lat").value,lng:$("#lng").value,radius_km:$("#rad").value,available_only:$("#av").checked});
+  const d=(await api("/api/donors/search?"+q)).data;marks.forEach(m=>m.setMap(null));marks=[];
+  if(!d.length){$("#res").innerHTML='<div class="card">No nearby compatible donors found. Try a larger radius or contact a blood bank.</div>';return;}
+  $("#res").innerHTML=`<p><b>${d.length}</b> compatible donor(s) in this area</p>`+d.map(x=>`<div class="card" style="margin-bottom:10px"><span class="badge status">${esc(x.blood_group)}</span> ~${x.distance_km} km away · ${x.availability?"Available":"Unavailable"}</div>`).join("");
+  if(map){const b=new google.maps.LatLngBounds();d.forEach(x=>{const p={lat:x.latitude,lng:x.longitude};b.extend(p);
+   marks.push(new google.maps.Marker({position:p,map,animation:google.maps.Animation.DROP,title:x.blood_group+" (approx.)"}));});map.fitBounds(b);}
+ }catch(err){$("#res").innerHTML="";toast(err.message,"error");}});}
+</script></body></html>

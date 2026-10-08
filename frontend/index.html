@@ -1,0 +1,754 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>BloodLink: Blood where it is needed, when it is needed</title>
+<meta name="description" content="Real-time emergency blood donor matching. Register as a donor or find compatible blood nearby.">
+<meta name="theme-color" content="#060608">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="js/app.js"></script>
+<style>
+:root{--bg:#060608;--red:#e5192b;--red2:#ff4757;--ink:#f4f4f5;--mute:#9a9aa6;--line:rgba(255,255,255,.1);--ease:cubic-bezier(.16,1,.3,1)}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:#d4d4d8;font-family:"Plus Jakarta Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden;transition:opacity .26s,filter .26s}
+body.leaving{opacity:0;filter:blur(8px)}
+a{color:inherit;text-decoration:none}
+h1,h2,h3,p{margin:0}
+#gl{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block;background:#060608}
+body.nogl #gl{display:none}
+body.nogl{background:radial-gradient(60% 50% at 70% 40%,#5a0a14 0,#060608 70%)}
+#sp{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,#b91c1c,#ff7a45);z-index:120}
+.grain{position:fixed;inset:-50%;z-index:2;pointer-events:none;opacity:.07;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");animation:gr 1s steps(6) infinite}
+@keyframes gr{0%{transform:translate(0,0)}20%{transform:translate(-3%,2%)}40%{transform:translate(2%,-3%)}60%{transform:translate(-2%,-1%)}80%{transform:translate(3%,3%)}100%{transform:translate(0,0)}}
+main,header.top,footer,.ticker{position:relative;z-index:3}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px;width:100%}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+
+/* preloader */
+#pre{position:fixed;inset:0;z-index:200;background:#060608;display:grid;place-items:center;transition:clip-path 1.1s var(--ease),opacity .4s 1s;clip-path:inset(0 0 0 0);animation:preOut 0s 5s forwards}
+#pre.done{clip-path:inset(0 0 100% 0);opacity:0;pointer-events:none}
+@keyframes preOut{to{visibility:hidden;pointer-events:none}}
+.pre-in{text-align:center}
+.pre-drop{width:64px;height:86px;margin:0 auto 22px;display:block}
+.pre-num{font:700 13px "JetBrains Mono",monospace;letter-spacing:.3em;color:#a1a1aa}
+.pre-bar{width:180px;height:2px;background:rgba(255,255,255,.1);margin:14px auto 0;overflow:hidden;border-radius:2px}
+.pre-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#e5192b,#ff7a45)}
+
+/* ticker + nav */
+.ticker{background:rgba(120,10,20,.35);border-bottom:1px solid rgba(255,70,80,.18);overflow:hidden;font-size:13px;backdrop-filter:blur(10px)}
+.mq{display:flex;width:max-content;white-space:nowrap;padding:8px 0;animation:mq 55s linear infinite}@keyframes mq{to{transform:translateX(-50%)}}
+.mq span{padding:0 32px;color:#fecaca}.mq b{color:#fff}
+header.top{position:sticky;top:0;z-index:60;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);background:rgba(6,6,8,.55);border-bottom:1px solid rgba(255,255,255,.06)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 24px;max-width:1180px;margin:0 auto}
+.logo{font-weight:800;font-size:20px;letter-spacing:-.03em;color:#fff;display:flex;align-items:center;gap:8px}
+.logo i{width:10px;height:10px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--red);box-shadow:0 0 14px var(--red)}
+#navr{display:flex;align-items:center;gap:4px;font-size:14px}
+#navr a{padding:8px 14px;border-radius:99px;color:#a1a1aa;transition:color .2s,background .2s}
+#navr a:hover{color:#fff;background:rgba(255,255,255,.06)}
+#navr a.cta{background:var(--red);color:#fff;font-weight:700}
+#menuBtn{display:none}
+@media(max-width:860px){
+ #menuBtn{display:inline-block;border:1px solid var(--line);background:transparent;color:#fff;border-radius:99px;padding:8px 16px;font:600 14px inherit;cursor:pointer}
+ #navr{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;align-items:stretch;background:rgba(6,6,8,.96);padding:12px 24px 20px}
+ #navr.open{display:flex}
+}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:16px 30px;border-radius:99px;border:0;font:700 15px "Plus Jakarta Sans",sans-serif;cursor:pointer;color:#fff;background:linear-gradient(135deg,#ff3b4e,#b3101f);box-shadow:0 10px 40px rgba(229,25,43,.4),inset 0 1px 0 rgba(255,255,255,.3);transition:transform .35s var(--ease),box-shadow .35s;position:relative;overflow:hidden}
+.btn::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.35) 50%,transparent 70%);transform:translateX(-120%);transition:transform .7s}
+.btn:hover{box-shadow:0 16px 50px rgba(229,25,43,.6),inset 0 1px 0 rgba(255,255,255,.3)}.btn:hover::after{transform:translateX(120%)}
+.btn:disabled{opacity:.6;cursor:wait}
+.btn.ghost{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.2);box-shadow:none;backdrop-filter:blur(10px)}
+.btn.ghost:hover{background:rgba(255,255,255,.1);box-shadow:none}
+.btn.white{background:#fff;color:#b3101f;box-shadow:0 10px 40px rgba(255,255,255,.15)}
+
+/* type */
+.eyebrow{display:inline-flex;align-items:center;gap:10px;font:700 12px "JetBrains Mono",monospace;letter-spacing:.2em;text-transform:uppercase;color:#ff6b78}
+.eyebrow i{width:8px;height:8px;border-radius:50%;background:#34d399;animation:pd 1.8s infinite}
+@keyframes pd{0%{box-shadow:0 0 0 0 rgba(52,211,153,.7)}100%{box-shadow:0 0 0 12px rgba(52,211,153,0)}}
+.h-xl{font-size:clamp(46px,8.2vw,118px);line-height:.96;letter-spacing:-.045em;font-weight:800;color:#fff}
+.h-lg{font-size:clamp(34px,5.4vw,76px);line-height:1;letter-spacing:-.04em;font-weight:800;color:#fff}
+.lead{font-size:clamp(16px,1.5vw,20px);line-height:1.65;color:#a1a1ab;max-width:520px}
+.red{background:linear-gradient(90deg,#ff9aa2,#ff3b4e 40%,#ff7a45 80%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sp-word{display:inline-block;overflow:hidden;vertical-align:top;padding-bottom:.12em;margin-bottom:-.12em}
+.sp-word>span{display:inline-block;transform:translateY(112%) rotate(4deg);transition:transform 1.1s var(--ease);transition-delay:calc(var(--i)*55ms)}
+.in .sp-word>span,.go .hero .sp-word>span{transform:none}
+.rv{opacity:0;transform:translateY(46px);transition:opacity 1s var(--ease),transform 1s var(--ease);transition-delay:var(--d,0ms)}
+.rv.in{opacity:1;transform:none}
+.nojs .rv{opacity:1;transform:none}
+
+/* sections */
+section{position:relative}
+.sec{min-height:100vh;min-height:100svh;display:flex;align-items:center;padding:110px 0}
+.hero{padding-bottom:70px}
+.col{max-width:600px}
+.col.r{margin-left:auto}
+.glass{background:rgba(14,10,12,.6);border:1px solid rgba(255,255,255,.09);border-radius:28px;backdrop-filter:blur(22px) saturate(1.2);-webkit-backdrop-filter:blur(22px) saturate(1.2);box-shadow:0 30px 80px rgba(0,0,0,.45)}
+.tilt3d{transform-style:preserve-3d;transition:transform .5s var(--ease),border-color .3s}
+.tilt3d:hover{border-color:rgba(255,71,87,.5)}
+.chnum{font:700 clamp(80px,14vw,200px)/0.8 "Plus Jakarta Sans";letter-spacing:-.06em;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.14);margin-bottom:10px;display:block}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:36px}
+.stat{padding:26px}
+.stat b{display:block;font-size:clamp(38px,5vw,64px);font-weight:800;letter-spacing:-.04em;color:#fff;line-height:1}
+.stat span{display:block;margin-top:8px;font-size:13px;color:#9a9aa6}
+.steps{display:grid;gap:14px;margin-top:34px}
+.step{display:flex;gap:18px;padding:22px 24px;align-items:flex-start}
+.step em{font:700 13px "JetBrains Mono",monospace;font-style:normal;color:#ff4757;padding-top:3px}
+.step h3{color:#fff;font-size:20px;letter-spacing:-.02em}
+.step p{margin-top:6px;font-size:14px;color:#9a9aa6;line-height:1.6}
+
+.marq{overflow:hidden;position:relative;z-index:3;padding:30px 0;border-block:1px solid rgba(255,255,255,.07);background:rgba(6,6,8,.4);backdrop-filter:blur(6px)}
+.marq div{display:flex;width:max-content;white-space:nowrap;will-change:transform}
+.marq span{font:800 clamp(48px,9vw,130px)/1 "Plus Jakarta Sans";letter-spacing:-.04em;color:transparent;-webkit-text-stroke:1.5px rgba(255,255,255,.28);padding-right:.5em}
+.marq span:nth-child(even){color:#e5192b;-webkit-text-stroke:0}
+
+.feed{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;margin-top:34px}
+.fc{display:flex;gap:16px;align-items:center;padding:18px}
+.bg-tag{min-width:58px;height:58px;border-radius:18px;display:grid;place-items:center;font-weight:800;font-size:21px;color:#fff}
+.lvl-critical{background:#b91c1c;animation:crit 2s infinite}.lvl-urgent{background:#f59e0b;color:#000}.lvl-normal{background:#16a34a}
+@keyframes crit{50%{box-shadow:0 0 0 9px rgba(229,25,43,.15)}}
+.fc h3{color:#fff;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fc small{color:#9a9aa6;font-size:12px}
+.fc a{font-size:12px;color:#ff6b78;text-decoration:underline}
+
+/* forms */
+.card{padding:clamp(22px,3.4vw,40px)}
+.fld{width:100%;padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.13);color:#fff;font:inherit;font-size:15px;transition:border-color .2s,box-shadow .2s,background .2s}
+.fld:focus{outline:0;border-color:#ff4757;box-shadow:0 0 0 4px rgba(229,25,43,.2);background:rgba(255,255,255,.08)}
+.fld::placeholder{color:#6b6b76}
+select.fld option{background:#18181b}
+.l{display:block;font-size:12px;font-weight:700;color:#a1a1ab;margin:0 0 7px;letter-spacing:.04em}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.mt{margin-top:16px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:10px 18px;border-radius:99px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);color:#e4e4e7;font:800 14px "Plus Jakarta Sans";cursor:pointer;transition:.25s var(--ease)}
+.chip:hover{background:rgba(255,255,255,.12);transform:translateY(-2px)}
+.chip[aria-checked=true]{background:var(--red);border-color:var(--red);color:#fff;box-shadow:0 8px 26px rgba(229,25,43,.5);transform:scale(1.06)}
+.chk{display:flex;gap:12px;font-size:12px;line-height:1.6;color:#9a9aa6;cursor:pointer;margin-top:20px}
+.chk input{accent-color:#e5192b;margin-top:3px}
+.hint{font-size:12px;color:#6b6b76;margin-top:14px;line-height:1.6}
+.hint a,.lnk{color:#ff6b78;text-decoration:underline}
+.hidden{display:none!important}
+.skel{background:linear-gradient(90deg,#18181b,#27272a,#18181b);background-size:200%;animation:sh 1.2s infinite;border-radius:16px;height:76px}@keyframes sh{to{background-position:-200% 0}}
+.toast{position:fixed;right:16px;bottom:16px;padding:12px 20px;border-radius:14px;color:#fff;background:#27272a;z-index:150;max-width:90vw;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.toast.error{background:#b91c1c}.toast.success{background:#16a34a}
+.done{text-align:center;padding:24px 0}
+.done .hrt{font-size:70px;display:inline-block;animation:hb .9s infinite}@keyframes hb{0%,100%{transform:scale(1)}15%{transform:scale(1.2)}30%{transform:scale(1)}45%{transform:scale(1.14)}}
+.cta-card{padding:clamp(40px,7vw,90px) 24px;text-align:center;background:linear-gradient(135deg,rgba(190,20,35,.6),rgba(50,6,10,.7))}
+footer{background:rgba(5,5,7,.92);color:#6b6b76;font-size:13px;padding:36px 24px;line-height:1.7}
+footer p{max-width:900px;margin:auto}
+
+/* HUD */
+#bpm{position:fixed;right:22px;bottom:22px;z-index:50;display:flex;align-items:center;gap:12px;padding:10px 16px 10px 14px;border-radius:99px;background:rgba(10,8,10,.6);border:1px solid var(--line);backdrop-filter:blur(14px);font:700 12px "JetBrains Mono",monospace;color:#fff;letter-spacing:.08em}
+#bpm .h{color:#ff3b4e;display:inline-block;transition:transform .08s}
+#bpm canvas{width:96px;height:26px}
+#rail{position:fixed;right:22px;top:50%;transform:translateY(-50%);z-index:50;display:flex;flex-direction:column;gap:14px}
+#rail a{display:block;width:10px;height:10px;border-radius:50%;border:1.5px solid rgba(255,255,255,.4);position:relative;transition:.35s var(--ease)}
+#rail a.on{background:#ff3b4e;border-color:#ff3b4e;box-shadow:0 0 14px #ff3b4e;transform:scale(1.35)}
+#rail a span{position:absolute;right:22px;top:50%;transform:translateY(-50%);font:700 10px "JetBrains Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:#fff;opacity:0;white-space:nowrap;pointer-events:none;transition:opacity .25s}
+#rail a:hover span{opacity:1}
+#cur,#cur2{position:fixed;left:0;top:0;pointer-events:none;z-index:300;border-radius:50%;display:none}
+#cur{width:7px;height:7px;background:#ff3b4e;margin:-3.5px 0 0 -3.5px}
+#cur2{width:38px;height:38px;border:1px solid rgba(255,255,255,.35);margin:-19px 0 0 -19px;transition:width .3s var(--ease),height .3s var(--ease),margin .3s var(--ease),background .3s}
+#cur2.big{width:70px;height:70px;margin:-35px 0 0 -35px;background:rgba(229,25,43,.15)}
+@media(pointer:fine){body.go #cur,body.go #cur2{display:block}}
+
+@media(max-width:860px){
+ .sec{align-items:flex-end;padding:90px 0 70px}
+ .hero{padding-top:30vh}
+ .col.r{margin-left:0}
+ .g2{grid-template-columns:1fr}
+ .stats{grid-template-columns:1fr 1fr}
+ #rail{display:none}
+ #bpm{right:12px;bottom:12px;transform:scale(.85);transform-origin:right bottom}
+ .glass{background:rgba(10,7,9,.78)}
+ .chnum{font-size:90px}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01ms!important}.rv{opacity:1;transform:none}.sp-word>span{transform:none}}
+</style>
+</head>
+<body class="nojs">
+
+<div id="pre" aria-hidden="true"><div class="pre-in">
+  <svg class="pre-drop" viewBox="0 0 64 86"><defs><clipPath id="pc"><path d="M32 3C32 3 6 34 6 55a26 26 0 0 0 52 0C58 34 32 3 32 3z"/></clipPath></defs>
+  <path d="M32 3C32 3 6 34 6 55a26 26 0 0 0 52 0C58 34 32 3 32 3z" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="2"/>
+  <rect id="preFill" x="0" y="86" width="64" height="86" fill="#e5192b" clip-path="url(#pc)"/></svg>
+  <div class="pre-num" id="preNum">000</div><div class="pre-bar"><i id="preBar"></i></div>
+</div></div>
+
+<canvas id="gl" aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+<div id="cur"></div><div id="cur2"></div>
+
+<div class="ticker" aria-label="Live emergency alerts"><div class="mq" id="ticker"><span>Connecting to live alerts…</span></div></div>
+<header class="top"><div class="nav">
+  <a href="index.html" class="logo"><i></i>BloodLink</a>
+  <button id="menuBtn" aria-expanded="false" aria-controls="navr">Menu</button>
+  <nav id="navr" aria-label="Main"></nav>
+</div></header>
+
+<aside id="rail" aria-label="Sections"></aside>
+<div id="bpm" aria-hidden="true"><span class="h">♥</span><span id="bpmN">72</span><span style="color:#71717a">BPM</span><canvas id="ecg" width="192" height="52"></canvas></div>
+
+<main>
+<!-- HERO -->
+<section id="home" class="sec hero"><div class="wrap"><div class="col">
+  <p class="eyebrow rv"><i></i>Real-time emergency blood network</p>
+  <h1 class="h-xl split" style="margin-top:22px">Blood, at the speed of a <span class="red">heartbeat.</span></h1>
+  <p class="lead rv" style="margin-top:26px;--d:300ms">BloodLink finds compatible donors near the hospital, alerts them instantly, and shows you who is on the way.</p>
+  <div class="rv" style="margin-top:36px;display:flex;gap:12px;flex-wrap:wrap;--d:450ms">
+    <a href="#register" class="btn mag">Become a donor</a><a href="#search" class="btn ghost mag">Find blood</a>
+  </div>
+  <p class="mono rv" style="margin-top:44px;font-size:11px;color:#6b6b76;letter-spacing:.2em;--d:600ms">↓ SCROLL · THE DROP BECOMES A HEART</p>
+</div></div></section>
+
+<!-- CHAPTER 1 -->
+<section id="c1" class="sec"><div class="wrap"><div class="col r">
+  <span class="chnum rv">01</span>
+  <p class="eyebrow rv">The drop</p>
+  <h2 class="h-lg split" style="margin-top:18px">One drop. One call. One match.</h2>
+  <p class="lead rv" style="margin-top:22px">A request goes out and the network wakes up. Compatible donors inside your radius are found in a blink, using real blood-group compatibility, not guesswork.</p>
+</div></div></section>
+
+<!-- CHAPTER 2 -->
+<section id="c2" class="sec"><div class="wrap"><div class="col">
+  <span class="chnum rv">02</span>
+  <p class="eyebrow rv">The pulse</p>
+  <h2 class="h-lg split" style="margin-top:18px">Alerted in seconds. <span class="red">Beating again.</span></h2>
+  <p class="lead rv" style="margin-top:22px">Donors accept with one tap. The requester sees who is on the way. Behind every green tick is a heart that kept going.</p>
+</div></div></section>
+
+<!-- IMPACT -->
+<section id="impact" class="sec"><div class="wrap"><div class="col r">
+  <p class="eyebrow rv">Impact</p>
+  <h2 class="h-lg split" style="margin-top:18px">A network that is already moving.</h2>
+  <div class="stats">
+    <div class="glass stat rv tilt3d"><b id="n1">–</b><span>Registered donors</span></div>
+    <div class="glass stat rv tilt3d" style="--d:100ms"><b id="n2">–</b><span>Blood requests</span></div>
+    <div class="glass stat rv tilt3d" style="--d:200ms"><b id="n3">–</b><span>Fulfilled</span></div>
+  </div>
+</div></div></section>
+
+<div class="marq" aria-hidden="true"><div id="mq1"><span>Give blood</span><span>Save lives</span><span>Give blood</span><span>Save lives</span><span>Give blood</span><span>Save lives</span></div></div>
+
+<!-- HOW -->
+<section id="how" class="sec"><div class="wrap"><div class="col">
+  <p class="eyebrow rv">How it works</p>
+  <h2 class="h-lg split" style="margin-top:18px">Three steps from alert to arrival.</h2>
+  <div class="steps">
+    <div class="glass step rv tilt3d"><em>01</em><div><h3>Request</h3><p>A hospital or family member posts blood group, units and urgency.</p></div></div>
+    <div class="glass step rv tilt3d" style="--d:100ms"><em>02</em><div><h3>Match</h3><p>Compatible, available donors inside your radius are alerted at once.</p></div></div>
+    <div class="glass step rv tilt3d" style="--d:200ms"><em>03</em><div><h3>Respond</h3><p>Donors accept in one tap and the requester sees who is on the way.</p></div></div>
+  </div>
+</div></div></section>
+
+<!-- LIVE -->
+<section id="live" class="sec"><div class="wrap"><div class="col r" style="max-width:760px">
+  <p class="eyebrow rv"><i></i>Live now</p>
+  <h2 class="h-lg split" style="margin-top:18px">Open emergency requests.</h2>
+  <p class="lead rv" style="margin-top:16px">Anonymous. No names, no exact locations.</p>
+  <div id="feed" class="feed"><div class="skel"></div><div class="skel"></div></div>
+</div></div></section>
+
+<!-- REGISTER -->
+<section id="register" class="sec"><div class="wrap"><div class="col" style="max-width:640px">
+  <p class="eyebrow rv">Donor registration</p>
+  <h2 class="h-lg split" style="margin:18px 0 26px">One signup. <span class="red">Someone's second chance.</span></h2>
+  <div class="glass card rv" id="regCard">
+    <form id="regForm" novalidate>
+      <div class="g2">
+        <div><label class="l" for="rn">Full name</label><input class="fld" id="rn" required minlength="2" maxlength="100" autocomplete="name" placeholder="Ayesha Khan"></div>
+        <div><label class="l" for="rp">Phone (optional)</label><input class="fld" id="rp" type="tel" pattern="\+?[0-9 \-]{7,20}" autocomplete="tel" placeholder="+92 300 1234567"></div>
+      </div>
+      <div class="g2 mt">
+        <div><label class="l" for="re">Email</label><input class="fld" id="re" type="email" required autocomplete="email" placeholder="you@email.com"></div>
+        <div><label class="l" for="rpw">Password (min 8)</label><input class="fld" id="rpw" type="password" required minlength="8" maxlength="72" autocomplete="new-password"></div>
+      </div>
+      <div class="mt"><span class="l" id="rbgl">Your blood group</span><div id="rbg" class="chips" role="radiogroup" aria-labelledby="rbgl"></div></div>
+      <label class="chk"><input type="checkbox" id="rc"><span>I understand that registering does not confirm I am medically eligible to donate; a blood bank will verify me.</span></label>
+      <button id="rb" class="btn mag" style="width:100%;margin-top:24px">Register as donor</button>
+      <p class="hint">We will ask for your location so nearby requests can reach you. Already registered? <a href="login.html">Login</a></p>
+    </form>
+    <div id="regDone" class="done hidden">
+      <div class="hrt">❤️</div>
+      <h3 style="color:#fff;font-size:26px;letter-spacing:-.03em;margin-top:10px">You're a donor now.</h3>
+      <p id="regMsg" style="margin-top:10px;color:#9a9aa6;font-size:14px"></p>
+      <a href="dashboard.html" class="btn" style="margin-top:24px">Open my dashboard</a>
+    </div>
+  </div>
+</div></div></section>
+
+<!-- SEARCH -->
+<section id="search" class="sec"><div class="wrap">
+  <p class="eyebrow rv">Find blood</p>
+  <h2 class="h-lg split" style="margin:18px 0 30px;max-width:760px">Who can give, and who is nearby?</h2>
+  <div style="display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:20px" class="sgrid">
+    <form id="sf" class="glass card rv" novalidate style="height:fit-content">
+      <span class="l" id="sbgl">Patient blood group</span>
+      <div id="sbg" class="chips" role="radiogroup" aria-labelledby="sbgl"></div>
+      <div class="g2 mt">
+        <div><label class="l" for="slat">Latitude</label><input class="fld" id="slat" type="number" step="any" placeholder="31.5204"></div>
+        <div><label class="l" for="slng">Longitude</label><input class="fld" id="slng" type="number" step="any" placeholder="74.3587"></div>
+      </div>
+      <div class="mt"><label class="l" for="srad">Radius</label><select class="fld" id="srad"><option value="5">5 km</option><option value="10" selected>10 km</option><option value="20">20 km</option><option value="50">50 km</option></select></div>
+      <div class="g2" style="margin-top:22px"><button class="btn mag" id="sb">Search</button><button type="button" class="btn ghost mag" id="sgeo">Use my location</button></div>
+    </form>
+    <div class="rv" aria-live="polite" style="--d:120ms">
+      <div id="compat" class="glass card" style="color:#9a9aa6;font-size:14px">Pick a blood group to see who can donate to that patient.</div>
+      <div id="sres" style="margin-top:14px"></div>
+    </div>
+  </div>
+</div></section>
+
+<!-- CTA -->
+<section id="cta" class="sec" style="min-height:80vh"><div class="wrap">
+  <div class="glass cta-card rv">
+    <h2 class="h-lg">Need blood right now?</h2>
+    <p class="lead" style="margin:18px auto 34px;color:#e4c4c8">Send an emergency request and compatible donors are alerted instantly.</p>
+    <a href="request-blood.html" class="btn white mag">Request blood</a>
+  </div>
+</div></section>
+</main>
+
+<footer><p><b style="color:#d4d4d8">BloodLink</b> is a matching and communication platform only. It does not replace medical professionals or hospital blood-bank procedures, and does not guarantee blood availability. Always verify compatibility and donation eligibility with qualified medical staff.</p></footer>
+
+<script id="vs" type="x-shader/x-vertex">
+attribute vec2 p;
+void main(){gl_Position=vec4(p,0.,1.);}
+</script>
+<script id="fs" type="x-shader/x-fragment">
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+uniform vec2 uRes,uOff,uMouse;
+uniform float uTime,uStage,uRot,uBeat,uScale,uDim,uVel;
+
+float smin(float a,float b,float k){float h=max(k-abs(a-b),0.)/k;return min(a,b)-h*h*k*.25;}
+mat2 rot(float a){float c=cos(a),s=sin(a);return mat2(c,-s,s,c);}
+float dot2(vec2 v){return dot(v,v);}
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+
+float sdHeart(vec2 p){
+  p.x=abs(p.x);
+  if(p.y+p.x>1.) return sqrt(dot2(p-vec2(.25,.75)))-sqrt(2.)/4.;
+  return sqrt(min(dot2(p-vec2(0.,1.)),dot2(p-.5*max(p.x+p.y,0.))))*sign(p.x-p.y);
+}
+float sdRoundCone(vec3 p,float r1,float r2,float h){
+  float b=(r1-r2)/h;float a=sqrt(1.-b*b);
+  vec2 q=vec2(length(p.xz),p.y);float k=dot(q,vec2(-b,a));
+  if(k<0.) return length(q)-r1;
+  if(k>a*h) return length(q-vec2(0.,h))-r2;
+  return dot(q,vec2(a,b))-r1;
+}
+float blobs(vec3 p){
+  float split=1.-smoothstep(0.,1.,uStage);
+  float d=length(p)-(.46+.22*(1.-split));
+  for(int i=0;i<6;i++){
+    float fi=float(i);float a=uTime*.5+fi*1.0472;
+    float R=split*(1.05+.4*sin(fi*2.3+uTime*.7))+.001;
+    vec3 c=vec3(cos(a)*R,sin(a*1.3+fi)*R*.7,sin(a*.9)*R*.8);
+    d=smin(d,length(p-c)-(.2+.07*sin(fi*5.)),.5);
+  }
+  return d;
+}
+float dropD(vec3 p){p.y+=.46;return sdRoundCone(p,.6,.025,1.45);}
+float heartD(vec3 p){
+  float sc=1.18;vec3 q=p/sc;q.y+=.5;
+  float h=sdHeart(q.xy);
+  vec2 w=vec2(h+.22,abs(q.z)-.1);
+  return (min(max(w.x,w.y),0.)+length(max(w,0.))-.22)*sc;
+}
+float spray(vec3 p){
+  float d=1e5;
+  for(int i=0;i<12;i++){
+    float fi=float(i);float a=fi*2.399+uTime*.35;float r=.9+.08*fi;
+    vec3 c=vec3(cos(a)*r,(fi-5.5)*.22+sin(uTime*.8+fi)*.12,sin(a)*r*.7);
+    d=min(d,length(p-c)-(.1+.06*sin(fi*3.1)));
+  }
+  return d;
+}
+float map(vec3 p){
+  p/=uScale;
+  float amp=.028+uVel*.06;
+  float wob=amp*sin(p.y*5.5+uTime*2.1)*sin(p.x*4.7-uTime*1.7)*sin(p.z*5.1+uTime*1.3);
+  float d;
+  if(uStage<1.) d=mix(blobs(p),dropD(p),smoothstep(.45,1.,uStage));
+  else if(uStage<2.) d=mix(dropD(p),heartD(p),smoothstep(0.,1.,uStage-1.));
+  else d=mix(heartD(p),spray(p),smoothstep(0.,1.,uStage-2.));
+  return (d+wob)*uScale;
+}
+vec3 nor(vec3 p){
+  vec2 e=vec2(1.,-1.)*.0014;
+  return normalize(e.xyy*map(p+e.xyy)+e.yyx*map(p+e.yyx)+e.yxy*map(p+e.yxy)+e.xxx*map(p+e.xxx));
+}
+vec3 env(vec3 d){
+  float y=d.y*.5+.5;
+  vec3 c=mix(vec3(.015,.004,.01),vec3(.16,.03,.06),y);
+  c+=vec3(1.,.93,.88)*4.*smoothstep(.955,.985,dot(d,normalize(vec3(.5,.75,.55))));
+  c+=vec3(1.,.12,.2)*2.6*smoothstep(.92,.97,dot(d,normalize(vec3(-.85,.05,.45))));
+  c+=vec3(1.,.55,.4)*1.6*smoothstep(.1,0.,abs(d.y-.32))*smoothstep(-.1,.7,d.z)*.7;
+  c+=vec3(.5,.7,1.)*1.1*smoothstep(.9,.97,dot(d,normalize(vec3(.2,-.4,-.9))));
+  return c;
+}
+void main(){
+  vec2 uv=(gl_FragCoord.xy-.5*uRes)/uRes.y;
+  vec2 suv=uv-uOff;
+  vec3 ro=vec3(uMouse*.18,5.2);
+  vec3 rd=normalize(vec3(suv,-1.7));
+  vec3 rdW=rd;
+  float a=uRot;
+  mat2 R=rot(-a);
+  ro.xz=R*ro.xz;rd.xz=R*rd.xz;
+  float hw=smoothstep(1.4,1.95,uStage)*(1.-smoothstep(2.4,3.,uStage));
+  float bw=mix(.28,1.,hw);
+  float bt=uBeat*bw;
+
+  float t=2.2,minD=1e3;bool hit=false;vec3 p=ro;
+  for(int i=0;i<84;i++){
+    p=ro+rd*t;float d=map(p);
+    minD=min(minD,d);
+    if(d<.0011*t){hit=true;break;}
+    t+=d*.74;
+    if(t>9.)break;
+  }
+  float vig=1.-dot(uv,uv)*.55;
+  vec3 bg=vec3(.022,.02,.027)+vec3(.1,.012,.03)*smoothstep(1.2,0.,length(suv))*.9;
+  float glow=exp(-max(minD,0.)*3.0);
+  bg+=vec3(.9,.06,.12)*glow*(.11+.1*bt+.03*uDim);
+  vec3 col=bg;
+  if(hit){
+    vec3 n=nor(p);
+    vec3 nW=n;nW.xz=rot(a)*n.xz;
+    float ndv=max(dot(nW,-rdW),0.);
+    vec3 L=normalize(vec3(.5,.75,.55));
+    float diff=max(dot(nW,L),0.);
+    vec3 refl=reflect(rdW,nW);
+    float ao=0.;
+    for(int i=1;i<=4;i++){float h=.07*float(i);ao+=(h-map(p+n*h))/exp2(float(i));}
+    ao=clamp(1.-ao*2.8,0.,1.);
+    float fres=.035+.965*pow(1.-ndv,4.5);
+    vec3 deep=vec3(.5,.0,.03);
+    vec3 c=deep*(.1+.95*diff)*ao;
+    c+=vec3(1.,.06,.1)*pow(1.-ndv,1.7)*.5*ao;
+    c+=vec3(.6,.02,.05)*pow(ndv,1.5)*.18;
+    c+=env(refl)*(fres*1.15+.06)*(.4+.6*ao);
+    c+=pow(max(dot(refl,L),0.),90.)*1.6;
+    c*=1.+bt*.55;
+    c+=vec3(.9,.04,.08)*bt*.12*hw;
+    col=mix(c,bg,uDim*.55);
+  }
+  col*=vig;
+  col=(col*(2.51*col+.03))/(col*(2.43*col+.59)+.14);
+  col=pow(clamp(col,0.,1.),vec3(.4545));
+  col+=(hash(gl_FragCoord.xy+uTime)-.5)/200.;
+  gl_FragColor=vec4(col,1.);
+}
+</script>
+<script id="pvs" type="x-shader/x-vertex">
+attribute vec4 a;
+uniform float uTime,uScroll,uBeat,uAsp,uPx;uniform vec2 uMouse;
+varying float vS;varying float vF;
+void main(){
+  vec3 p=a.xyz;float s=a.w;
+  p.y=mod(p.y+uTime*(.04+.1*s)+uScroll*(.5+s*1.4)+6.,12.)-6.;
+  p.x+=sin(uTime*.3+s*20.)*.35+uMouse.x*s*.6;
+  float k=1.7/(5.2-p.z);
+  vec2 uv=p.xy*k;
+  gl_Position=vec4(uv.x*2./uAsp,uv.y*2.,0.,1.);
+  gl_PointSize=(2.+9.*s*s)*k*uPx*(1.+uBeat*.25);
+  vS=s;vF=smoothstep(-6.,2.,p.z)*.9+.1;
+}
+</script>
+<script id="pfs" type="x-shader/x-fragment">
+precision mediump float;
+varying float vS;varying float vF;
+void main(){
+  float d=length(gl_PointCoord-.5);
+  float a=smoothstep(.5,0.,d);a*=a;
+  vec3 c=mix(vec3(.95,.1,.16),vec3(1.,.55,.3),vS*vS);
+  gl_FragColor=vec4(c*a*.8*vF,a*vF);
+}
+</script>
+
+<script>
+document.body.classList.remove("nojs");
+/* ======================= UI (uses $, api, esc, toast, countUp, logout, BG, DONORS_FOR from js/app.js) ======================= */
+(function(){
+const authed=()=>!!localStorage.getItem("bl_token"),role=()=>localStorage.getItem("bl_role");
+
+/* nav */
+const nav=$("#navr");
+nav.innerHTML=`<a href="#how">How it works</a><a href="#live">Live</a><a href="#register">Donate</a><a href="#search">Find blood</a><a href="request-blood.html">Request</a>`+
+ (authed()?`<a href="dashboard.html">Dashboard</a>${role()==="admin"?`<a href="admin.html">Admin</a>`:""}<a href="#" id="lo">Logout</a>`:`<a class="cta" href="login.html">Login</a>`);
+$("#lo")?.addEventListener("click",e=>{e.preventDefault();logout()});
+const mb=$("#menuBtn");mb.onclick=()=>{const o=nav.classList.toggle("open");mb.setAttribute("aria-expanded",String(o))};
+nav.addEventListener("click",e=>{if(e.target.closest("a")){nav.classList.remove("open");mb.setAttribute("aria-expanded","false")}});
+
+/* chips */
+function chips(el,cb){
+  el.innerHTML=BG.map(g=>`<button type="button" class="chip" role="radio" aria-checked="false" data-g="${g}">${g}</button>`).join("");
+  el.addEventListener("click",e=>{const b=e.target.closest(".chip");if(!b)return;
+    el.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-checked",String(c===b)));el.dataset.v=b.dataset.g;cb&&cb(b.dataset.g)});
+}
+chips($("#rbg"));chips($("#sbg"),showCompat);
+const geo=(ms=8000)=>new Promise((res,rej)=>{if(!navigator.geolocation)return rej(new Error("Location not supported"));
+  navigator.geolocation.getCurrentPosition(p=>res(p.coords),()=>rej(new Error("Could not get location")),{timeout:ms,maximumAge:60000})});
+
+/* live data */
+(async()=>{
+  try{const s=(await api("/api/statistics/public")).data;[["n1",s.donors],["n2",s.requests],["n3",s.fulfilled]].forEach(([id,n])=>{const el=$("#"+id);el.dataset.count=n;countUp(el)})}catch{}
+  try{
+    const f=(await api("/api/statistics/feed")).data||[],lv={critical:"Critical",urgent:"Urgent",normal:"Normal"};
+    $("#feed").innerHTML=f.length?f.map(r=>`<div class="glass fc tilt3d"><div class="bg-tag lvl-${esc(r.level)}">${esc(r.blood_group)}</div>
+      <div style="min-width:0"><h3>${esc(r.hospital)}</h3><small>${+r.units} unit(s) · ${lv[r.level]||esc(r.level)} · ${+r.matched} matched</small>
+      ${role()==="donor"?`<br><a href="respond.html?request=${+r.id}">I can help</a>`:""}</div></div>`).join("")
+      :`<div class="glass card" style="grid-column:1/-1;color:#9a9aa6">No open requests right now. That is good news.</div>`;
+    const it=f.map(r=>`<span><b>${esc(r.blood_group)}</b> needed · ${esc(r.hospital)} · ${+r.units} unit(s)</span>`).join("")||`<span>No open emergencies right now</span>`;
+    $("#ticker").innerHTML=it+it+it+it;
+  }catch{
+    $("#feed").innerHTML=`<div class="glass card" style="grid-column:1/-1;color:#9a9aa6">Live feed is unavailable right now.</div>`;
+    $("#ticker").innerHTML="<span>Live alerts unavailable</span>";
+  }
+})();
+
+/* register */
+$("#regForm").addEventListener("submit",async e=>{
+  e.preventDefault();const f=e.target,b=$("#rb");
+  if(!f.checkValidity()){f.reportValidity();return}
+  if(!$("#rbg").dataset.v)return toast("Please pick your blood group","error");
+  if(!$("#rc").checked)return toast("Please accept the eligibility note","error");
+  b.disabled=true;b.textContent="Creating profile…";
+  try{
+    const body={name:$("#rn").value.trim(),email:$("#re").value.trim(),role:"donor",password:$("#rpw").value};
+    if($("#rp").value)body.phone=$("#rp").value;
+    const j=await api("/api/auth/register",{method:"POST",body});
+    localStorage.setItem("bl_token",j.data.token);localStorage.setItem("bl_role",j.data.role);
+    let msg="Account created. Open your dashboard to add your location and finish your profile.";
+    try{const c=await geo();
+      await api("/api/donors/me",{method:"PUT",body:{blood_group:$("#rbg").dataset.v,latitude:+c.latitude.toFixed(6),longitude:+c.longitude.toFixed(6),availability:true,max_distance:10,last_donation_date:null}});
+      msg="Your donor profile is live. You will be alerted when a compatible request appears nearby."}catch{}
+    $("#regMsg").textContent=msg;$("#regForm").classList.add("hidden");$("#regDone").classList.remove("hidden");
+    window.BL&&BL.burst();toast("Welcome to BloodLink","success");
+  }catch(err){toast(err.message,"error");b.disabled=false;b.textContent="Register as donor"}
+});
+
+/* search */
+function showCompat(g){
+  const d=DONORS_FOR[g]||[];
+  $("#compat").innerHTML=`<p style="color:#9a9aa6;font-size:14px">A <b style="color:#fff">${g}</b> patient can receive blood from</p>
+  <div class="chips" style="margin-top:14px">${d.map(x=>`<span class="chip" style="background:var(--red);border-color:var(--red);color:#fff;cursor:default">${x}</span>`).join("")}</div>
+  <p class="hint">Guide only. The hospital blood bank confirms compatibility.</p>`;
+  window.BL&&BL.burst(.5);
+}
+$("#sgeo").onclick=async()=>{try{const c=await geo();$("#slat").value=c.latitude.toFixed(6);$("#slng").value=c.longitude.toFixed(6)}catch(e){toast(e.message,"error")}};
+$("#sf").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const g=$("#sbg").dataset.v;if(!g)return toast("Pick a blood group first","error");
+  const out=$("#sres");
+  if(!authed()){out.innerHTML=`<div class="glass card" style="font-size:14px;color:#d4d4d8">Donor counts near you are only shown to logged-in users to protect donor privacy. <a class="lnk" href="login.html?next=index.html">Login</a> or <a class="lnk" href="#register">register</a> to search.</div>`;return}
+  let la=$("#slat").value,ln=$("#slng").value;
+  if(!la||!ln){try{const c=await geo();la=c.latitude.toFixed(6);ln=c.longitude.toFixed(6);$("#slat").value=la;$("#slng").value=ln}catch{return toast("Allow location or enter latitude and longitude","error")}}
+  out.innerHTML='<div class="skel"></div>';
+  try{
+    const q=new URLSearchParams({blood_group:g,lat:la,lng:ln,radius_km:$("#srad").value,available_only:true});
+    const d=(await api("/api/donors/search?"+q)).data;
+    out.innerHTML=d.length?`<p style="color:#d4d4d8;margin-bottom:12px"><b style="color:#fff;font-size:30px">${d.length}</b> compatible donor(s) in this area</p><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px">`+
+      d.map(x=>`<div class="glass fc"><div class="bg-tag lvl-critical" style="min-width:46px;height:46px;font-size:17px;border-radius:14px">${esc(x.blood_group)}</div><small>~${+x.distance_km} km away · ${x.availability?"Available":"Unavailable"}</small></div>`).join("")+`</div>
+      <p class="hint"><a href="request-blood.html">Send an emergency request</a> to alert them now.</p>`
+      :`<div class="glass card" style="font-size:14px;color:#d4d4d8">No compatible donors in this radius. Try a larger radius or <a class="lnk" href="request-blood.html">send an emergency request</a>.</div>`;
+    window.BL&&BL.burst(.6);
+  }catch(err){out.innerHTML="";toast(err.message,"error")}
+});
+})();
+
+/* ======================= Motion layer: reveals, split text, cursor, tilt, magnets, marquee, HUD ======================= */
+(function(){
+const reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
+/* split headings into masked words */
+document.querySelectorAll(".split").forEach(h=>{
+  let i=0;
+  const walk=n=>{[...n.childNodes].forEach(c=>{
+    if(c.nodeType===3){const f=document.createDocumentFragment();
+      c.textContent.split(/(\s+)/).forEach(w=>{if(!w)return;if(/^\s+$/.test(w)){f.append(" ");return}
+        const o=document.createElement("span");o.className="sp-word";const s=document.createElement("span");s.textContent=w;s.style.setProperty("--i",i++);o.append(s);f.append(o)});
+      c.replaceWith(f)}
+    else if(c.nodeType===1)walk(c)})};
+  walk(h);
+});
+/* reveal on view */
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}}),{threshold:.18,rootMargin:"0px 0px -6% 0px"});
+document.querySelectorAll(".rv,.split").forEach(el=>io.observe(el));
+
+/* cursor */
+const cur=$("#cur"),cur2=$("#cur2");let cx=0,cy=0,tx=0,ty=0;
+addEventListener("pointermove",e=>{tx=e.clientX;ty=e.clientY;cur.style.transform=`translate(${tx}px,${ty}px)`},{passive:true});
+document.addEventListener("pointerover",e=>{cur2.classList.toggle("big",!!e.target.closest("a,button,.chip,input,select,label"))});
+/* tilt + magnet */
+document.addEventListener("pointermove",e=>{
+  const t=e.target.closest&&e.target.closest(".tilt3d");
+  document.querySelectorAll(".tilt3d.hot").forEach(x=>{if(x!==t){x.style.transform="";x.classList.remove("hot")}});
+  if(t&&!reduce){const r=t.getBoundingClientRect(),px=(e.clientX-r.left)/r.width-.5,py=(e.clientY-r.top)/r.height-.5;
+    t.classList.add("hot");t.style.transform=`perspective(900px) rotateY(${px*9}deg) rotateX(${-py*9}deg) translateZ(8px)`}
+  document.querySelectorAll(".mag").forEach(m=>{const r=m.getBoundingClientRect(),dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);
+    const near=Math.hypot(dx,dy)<Math.max(r.width,90);m.style.transform=near&&!reduce?`translate(${dx*.22}px,${dy*.32}px)`:""});
+},{passive:true});
+
+/* marquee on scroll */
+const mq=$("#mq1");let mqx=0;
+/* HUD: rail */
+const secs=[["home","Start"],["c1","The drop"],["c2","The pulse"],["impact","Impact"],["how","How"],["live","Live"],["register","Donate"],["search","Find"]];
+$("#rail").innerHTML=secs.map(([id,l])=>`<a href="#${id}" data-id="${id}" aria-label="${l}"><span>${l}</span></a>`).join("");
+/* ECG */
+const ecv=$("#ecg"),ex=ecv.getContext("2d"),bpmH=$("#bpm .h");
+const ecgF=u=>{u=((u%1)+1)%1;const g=(c,w,a)=>a*Math.exp(-((u-c)**2)/(w*w));return g(.2,.06,.14)+g(.4,.018,-.2)+g(.44,.024,1)+g(.48,.02,-.32)+g(.72,.08,.22)};
+let lastBeatCls=0;
+window.__hud=(time,beat)=>{
+  ex.clearRect(0,0,192,52);ex.lineWidth=2.2;ex.strokeStyle="#ff3b4e";ex.shadowColor="#ff3b4e";ex.shadowBlur=8;ex.beginPath();
+  for(let x=0;x<192;x++){const y=40-ecgF(x/192*.8-time*.4)*30;x?ex.lineTo(x,y):ex.moveTo(x,y)}ex.stroke();
+  bpmH.style.transform=`scale(${1+beat*.5})`;
+};
+window.__mq=(sy,t)=>{if(!mq)return;const half=mq.scrollWidth/2||1;mqx=-((sy*.45+t*30)%half);mq.style.transform=`translate3d(${mqx}px,0,0)`};
+window.__cursor=()=>{cx+=(tx-cx)*.18;cy+=(ty-cy)*.18;cur2.style.transform=`translate(${cx}px,${cy}px)`};
+})();
+
+/* ======================= WebGL liquid-blood engine ======================= */
+(function(){
+const cv=document.getElementById("gl"),reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
+const mob=()=>innerWidth<860;
+let gl=cv.getContext("webgl2",{antialias:false,alpha:false,powerPreference:"high-performance"})||cv.getContext("webgl",{antialias:false,alpha:false,powerPreference:"high-performance"});
+const fail=()=>{document.body.classList.add("nogl");window.__glFail=true;setTimeout(()=>finishPre(),0)};
+if(!gl){fail();return}
+function prog(vs,fs){
+  const mk=(t,s)=>{const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS)){console.error(gl.getShaderInfoLog(o));return null}return o};
+  const a=mk(gl.VERTEX_SHADER,vs),b=mk(gl.FRAGMENT_SHADER,fs);if(!a||!b)return null;
+  const p=gl.createProgram();gl.attachShader(p,a);gl.attachShader(p,b);gl.linkProgram(p);
+  if(!gl.getProgramParameter(p,gl.LINK_STATUS)){console.error(gl.getProgramInfoLog(p));return null}return p;
+}
+const src=id=>document.getElementById(id).textContent;
+const P=prog(src("vs"),src("fs")),Q=prog(src("pvs"),src("pfs"));
+if(!P||!Q){fail();return}
+const U=(p,names)=>{const o={};names.forEach(n=>o[n]=gl.getUniformLocation(p,n));return o};
+const uP=U(P,["uRes","uOff","uMouse","uTime","uStage","uRot","uBeat","uScale","uDim","uVel"]);
+const uQ=U(Q,["uTime","uScroll","uBeat","uAsp","uPx","uMouse"]);
+/* fullscreen triangle */
+const tri=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,tri);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+/* particles */
+const NP=mob()?500:1400,pd=new Float32Array(NP*4);
+for(let i=0;i<NP;i++){const s=Math.random();pd.set([(Math.random()-.5)*16,(Math.random())*12-6,-8+Math.random()*10,s],i*4)}
+const pb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,pb);gl.bufferData(gl.ARRAY_BUFFER,pd,gl.STATIC_DRAW);
+
+/* quality */
+let q=mob()?.55:.8,W=0,H=0;
+function resize(){
+  const dpr=Math.min(devicePixelRatio||1,2)*q;
+  W=Math.max(2,Math.floor(innerWidth*dpr));H=Math.max(2,Math.floor(innerHeight*dpr));
+  if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H}
+}
+addEventListener("resize",resize);resize();
+
+/* scene configs. ox = fraction of half-width; oy in screen-height units */
+const CFG={
+ home:{s:0,ox:.5,oy:0,sc:1.3,dim:0},
+ c1:{s:1,ox:-.5,oy:0,sc:1.4,dim:0},
+ c2:{s:2,ox:.5,oy:0,sc:1.45,dim:0},
+ impact:{s:2,ox:-.55,oy:0,sc:1.05,dim:.15},
+ how:{s:2,ox:.55,oy:0,sc:1,dim:.2},
+ live:{s:2.45,ox:-.58,oy:0,sc:1.05,dim:.2},
+ register:{s:2,ox:.58,oy:0,sc:1.1,dim:.1},
+ search:{s:3,ox:0,oy:0,sc:1.2,dim:.5},
+ cta:{s:2,ox:0,oy:0,sc:1.4,dim:.05}
+};
+const ids=Object.keys(CFG),els=ids.map(i=>document.getElementById(i));
+const S={s:0,ox:.5,oy:0,sc:1.3,dim:0,rb:0,burst:0,vel:0},T={...S};
+let active="";
+function setActive(id){
+  if(id===active)return;
+  const first=active==="";active=id;const c=CFG[id],m=mob();
+  T.s=c.s;T.ox=m?0:c.ox;T.oy=m?.27:c.oy;T.sc=m?c.sc*.62:c.sc;T.dim=m&&!["home","c1","c2"].includes(id)?Math.max(c.dim,.5):c.dim;
+  if(!first&&!reduce)T.rb+=1.7;
+  document.querySelectorAll("#rail a").forEach(a=>a.classList.toggle("on",a.dataset.id===id||(id==="cta"&&a.dataset.id==="search")));
+}
+function pickSection(){
+  const mid=innerHeight*.5;let best=active||"home";
+  for(let i=0;i<els.length;i++){const r=els[i].getBoundingClientRect();if(r.top<=mid&&r.bottom>mid){best=ids[i];break}}
+  setActive(best);
+}
+let mx=0,my=0,tmx=0,tmy=0;
+addEventListener("pointermove",e=>{tmx=e.clientX/innerWidth-.5;tmy=-(e.clientY/innerHeight-.5)},{passive:true});
+window.BL={burst(k){const v=k==null?1:k;S.burst=Math.max(S.burst,v)}};
+
+/* loop */
+let last=performance.now(),t0=last,frames=0,acc=0,lastY=scrollY,vel=0,first=true;
+const BEAT=.9;
+function frame(now){
+  requestAnimationFrame(frame);
+  const dt=Math.min(.05,(now-last)/1000);last=now;
+  const time=(now-t0)/1000*(reduce?.2:1);
+  /* adaptive quality */
+  acc+=dt;frames++;
+  if(frames>=40){const avg=acc/frames;
+    if(avg>.026&&q>.4){q=Math.max(.4,q-.1);resize()}
+    else if(avg<.0145&&q<(mob()?.7:1)){q=Math.min(mob()?.7:1,q+.05);resize()}
+    frames=0;acc=0}
+  pickSection();
+  const sy=scrollY;vel+=((sy-lastY)/Math.max(dt,.001)/2500-vel)*Math.min(1,dt*6);lastY=sy;
+  const k=1-Math.exp(-dt*(first?20:2.1));first=false;
+  for(const n of ["s","ox","oy","sc","dim","rb"])S[n]+=(T[n]-S[n])*k;
+  S.burst*=Math.exp(-dt*1.8);
+  mx+=(tmx-mx)*Math.min(1,dt*4);my+=(tmy-my)*Math.min(1,dt*4);
+  /* heartbeat */
+  const bt=((time%BEAT)+BEAT)%BEAT/BEAT;
+  let beat=Math.exp(-(((bt-.1)/.05)**2))+.55*Math.exp(-(((bt-.3)/.07)**2));
+  beat=Math.min(1.2,beat+S.burst);
+  const stage=S.s+S.burst*.0;
+  const asp=W/H;
+  const hwj=Math.min(1,Math.max(0,(S.s-1.4)/.55))*(1-Math.min(1,Math.max(0,(S.s-2.4)/.6)));
+  const spin=S.rb+sy*.0011+(reduce?0:time*.12),face=(reduce?0:Math.sin(time*.55)*.5)+mx*.5;
+  const rotA=spin*(1-hwj)+face*hwj;
+  gl.viewport(0,0,W,H);
+  gl.useProgram(P);
+  gl.bindBuffer(gl.ARRAY_BUFFER,tri);
+  const loc=gl.getAttribLocation(P,"p");gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+  gl.disable(gl.BLEND);
+  gl.uniform2f(uP.uRes,W,H);gl.uniform2f(uP.uOff,S.ox*asp*.5,S.oy);gl.uniform2f(uP.uMouse,mx,my);
+  gl.uniform1f(uP.uTime,time);gl.uniform1f(uP.uStage,stage);gl.uniform1f(uP.uRot,rotA);gl.uniform1f(uP.uBeat,beat);
+  gl.uniform1f(uP.uScale,S.sc*(1+S.burst*.06));gl.uniform1f(uP.uDim,S.dim);gl.uniform1f(uP.uVel,Math.min(1,Math.abs(vel)));
+  gl.drawArrays(gl.TRIANGLES,0,3);
+  /* particles */
+  gl.useProgram(Q);gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE);
+  gl.bindBuffer(gl.ARRAY_BUFFER,pb);
+  const al=gl.getAttribLocation(Q,"a");gl.enableVertexAttribArray(al);gl.vertexAttribPointer(al,4,gl.FLOAT,false,0,0);
+  gl.uniform1f(uQ.uTime,time);gl.uniform1f(uQ.uScroll,sy*.0016);gl.uniform1f(uQ.uBeat,beat*.5);gl.uniform1f(uQ.uAsp,asp);gl.uniform1f(uQ.uPx,H/760);gl.uniform2f(uQ.uMouse,mx,my);
+  gl.drawArrays(gl.POINTS,0,NP);
+  gl.disableVertexAttribArray(al);gl.disableVertexAttribArray(loc);
+  window.__hud&&__hud(time,beat);window.__mq&&__mq(sy,time);window.__cursor&&__cursor();
+  if(window.__ready===0){window.__ready=1;finishPre()}
+}
+window.__ready=0;
+requestAnimationFrame(frame);
+cv.addEventListener("webglcontextlost",e=>{e.preventDefault();document.body.classList.add("nogl")});
+})();
+
+/* ======================= Preloader ======================= */
+let preDone=false;
+function finishPre(){
+  if(preDone)return;preDone=true;
+  const go=()=>{document.getElementById("pre").classList.add("done");document.body.classList.add("go")};
+  const wait=Math.max(0,1500-(performance.now()-(window.__preT0||0)));
+  setTimeout(go,wait);
+}
+(function(){
+  window.__preT0=performance.now();
+  const num=document.getElementById("preNum"),bar=document.getElementById("preBar"),fill=document.getElementById("preFill");
+  let p=0;const iv=setInterval(()=>{p=Math.min(100,p+(100-p)*.08+.6);num.textContent=String(Math.floor(p)).padStart(3,"0");bar.style.width=p+"%";fill.setAttribute("y",String(86-p*.86));if(p>=99.5)clearInterval(iv)},30);
+  setTimeout(()=>{if(!preDone)finishPre()},3800);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dashboard — BloodLink</title><link rel="stylesheet" href="css/style.css"><script src="js/app.js"></script></head><body>
+<div id="nav"></div><main class="wrap"><h1 id="hi"><span class="skel" style="width:200px;display:inline-block"></span></h1><div id="main" class="reveal in"></div></main><div id="foot"></div>
+<script>
+if(requireAuth())(async()=>{try{
+const me=(await api("/api/auth/me")).data;$("#hi").textContent="Hello, "+me.name;
+if(me.role==="donor")return donor();if(me.role==="requester")return requester();
+location.href="admin.html";
+}catch(e){toast(e.message,"error");}})();
+async function donor(){const p=(await api("/api/donors/me")).data||{blood_group:"O+",latitude:"",longitude:"",availability:true,max_distance:10,last_donation_date:""};
+$("#main").innerHTML=`<form id="df" class="card"><h2>Donor profile</h2><p class="notice">Being listed does not mean you are medically eligible. Verify with a blood bank.</p>
+<div class="row"><div><label for="bg">Blood group</label><select id="bg"></select></div><div><label for="md">Max distance (km)</label><input id="md" type="number" min="1" max="100" value="${p.max_distance}"></div></div>
+<div class="row"><div><label for="lat">Latitude</label><input id="lat" type="number" step="any" required value="${p.latitude}"></div><div><label for="lng">Longitude</label><input id="lng" type="number" step="any" required value="${p.longitude}"></div></div>
+<label for="ld">Last donation date</label><input id="ld" type="date" value="${p.last_donation_date||""}">
+<label><input type="checkbox" id="av" ${p.availability?"checked":""}>Available for emergency requests</label>
+<p class="row" style="max-width:340px"><button class="btn">Save profile</button><button type="button" id="geo" class="btn ghost">Use my location</button></p></form>`;
+fillBG($("#bg"));$("#bg").value=p.blood_group;
+$("#geo").onclick=()=>navigator.geolocation?.getCurrentPosition(g=>{$("#lat").value=g.coords.latitude.toFixed(6);$("#lng").value=g.coords.longitude.toFixed(6);},()=>toast("Could not get location","error"));
+$("#df").onsubmit=async e=>{e.preventDefault();try{await api("/api/donors/me",{method:"PUT",body:{blood_group:$("#bg").value,latitude:+$("#lat").value,longitude:+$("#lng").value,
+max_distance:+$("#md").value,availability:$("#av").checked,last_donation_date:$("#ld").value||null}});toast("Profile saved","success");}catch(err){toast(err.message,"error");}};}
+async function requester(){const ids=(await api("/api/requests/mine")).data.map(r=>r.id);
+$("#main").innerHTML='<div class="skel"></div><div class="skel"></div>';
+const rs=(await Promise.all(ids.map(i=>api("/api/requests/"+i).then(r=>r.data).catch(()=>null)))).filter(Boolean);
+const open=rs.filter(r=>r.status==="open"),matched=rs.reduce((a,r)=>a+r.matched_donors,0),acc=rs.reduce((a,r)=>a+(r.matches||[]).filter(m=>m.status==="accepted").length,0);
+$("#main").innerHTML=`<div class="grid">${[["Requests",rs.length],["Active",open.length],["Matched donors",matched],["Accepted",acc]].map(([l,n])=>`<div class="card"><div class="num" data-count="${n}">0</div>${l}</div>`).join("")}</div>
+<p><a class="btn" href="request-blood.html">New request</a></p><div id="rl">${rs.length?"":"<div class='card'>No requests yet.</div>"}</div>`;
+document.querySelectorAll("[data-count]").forEach(countUp);
+$("#rl").innerHTML+=rs.map(r=>`<div class="card" style="margin-bottom:12px"><span class="badge ${r.emergency_level}">${r.emergency_level}</span> <span class="badge status">${r.status}</span>
+<h3>${esc(r.blood_group)} · ${r.units_required} unit(s) · ${esc(r.hospital_name)}</h3><p>${r.matched_donors} matched donor(s) · radius ${r.radius_km} km</p>
+${(r.matches||[]).filter(m=>m.status==="accepted").map(m=>`<p>✅ ${esc(m.name)} (~${m.distance_km} km) ${m.phone?esc(m.phone):""}</p>`).join("")}
+${r.status==="open"?`<button class="btn sm" onclick="closeR(${r.id},'fulfilled')">Mark fulfilled</button> <button class="btn sm ghost" onclick="closeR(${r.id},'cancelled')">Cancel</button>`:""}</div>`).join("");}
+async function closeR(id,o){try{await api(`/api/requests/${id}/close?outcome=${o}`,{method:"PATCH"});toast("Request updated","success");requester();}catch(e){toast(e.message,"error");}}
+</script></body></html>

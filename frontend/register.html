@@ -1,0 +1,15 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Register — BloodLink</title><link rel="stylesheet" href="css/style.css"><script src="js/app.js"></script></head><body>
+<div id="nav"></div><main class="wrap narrow"><div class="card"><h1>Create account</h1>
+<form id="f"><label for="name">Full name</label><input id="name" required minlength="2" maxlength="100">
+<label for="email">Email</label><input id="email" type="email" required>
+<label for="phone">Phone (optional)</label><input id="phone" type="tel" pattern="\+?[0-9 \-]{7,20}">
+<label for="role">I want to</label><select id="role"><option value="donor">Donate blood (Donor)</option><option value="requester">Request blood (Requester)</option></select>
+<label for="pw">Password (min 8 characters)</label><input id="pw" type="password" required minlength="8" maxlength="72" autocomplete="new-password">
+<p class="notice">Registering does not confirm you are medically eligible to donate.</p>
+<p><button class="btn" id="b">Register</button></p></form><p>Have an account? <a href="login.html">Login</a></p></div></main><div id="foot"></div>
+<script>$("#f").addEventListener("submit",async e=>{e.preventDefault();$("#b").disabled=true;
+try{const body={name:$("#name").value,email:$("#email").value,role:$("#role").value,password:$("#pw").value};
+if($("#phone").value)body.phone=$("#phone").value;
+const j=await api("/api/auth/register",{method:"POST",body});
+localStorage.setItem("bl_token",j.data.token);localStorage.setItem("bl_role",j.data.role);location.href="dashboard.html";}
+catch(err){toast(err.message,"error");$("#b").disabled=false;}});</script></body></html>

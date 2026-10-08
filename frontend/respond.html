@@ -1,0 +1,9 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Respond — BloodLink</title><link rel="stylesheet" href="css/style.css"><script src="js/app.js"></script></head><body>
+<div id="nav"></div><main class="wrap narrow"><div class="card"><h1>Emergency request <span id="id"></span></h1>
+<p>Can you help? The requester only receives your name and phone if you accept.</p>
+<p class="notice">Responding does not confirm eligibility. The hospital or blood bank will verify you before any donation.</p>
+<p class="row"><button class="btn" id="y">Yes, I can help</button><button class="btn ghost" id="n">Not available</button></p></div></main><div id="foot"></div>
+<script>const rid=+new URLSearchParams(location.search).get("request");
+if(!rid)location.href="index.html";else if(requireAuth("donor")){$("#id").textContent="#"+rid;
+for(const [b,a] of [["#y",true],["#n",false]])$(b).onclick=async()=>{try{const j=await api(`/api/requests/${rid}/respond`,{method:"POST",body:{accept:a}});toast(j.message,"success");setTimeout(()=>location.href="dashboard.html",1500);}catch(e){toast(e.message,"error");}};}
+</script></body></html>

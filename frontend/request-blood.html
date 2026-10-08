@@ -1,0 +1,31 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Request Blood — BloodLink</title><link rel="stylesheet" href="css/style.css"><script src="js/app.js"></script></head><body>
+<div id="nav"></div><main class="wrap"><h1>Create emergency request</h1>
+<p class="notice">BloodLink only notifies potential donors. Always coordinate with the hospital blood bank. Availability is not guaranteed.</p>
+<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))"><form id="f" class="card">
+<div class="row"><div><label for="bg">Blood group needed</label><select id="bg"></select></div><div><label for="units">Units (1–10)</label><input id="units" type="number" min="1" max="10" value="1" required></div></div>
+<label for="hosp">Hospital / location</label><input id="hosp" required minlength="2" maxlength="200" placeholder="Search hospital…">
+<div class="row"><div><label for="lat">Latitude</label><input id="lat" type="number" step="any" min="-90" max="90" required></div><div><label for="lng">Longitude</label><input id="lng" type="number" step="any" min="-180" max="180" required></div></div>
+<div class="row"><div><label for="lvl">Emergency level</label><select id="lvl"><option value="critical">Critical</option><option value="urgent" selected>Urgent</option><option value="normal">Normal</option></select></div>
+<div><label for="rad">Search radius</label><select id="rad"><option>5</option><option selected>10</option><option>20</option><option>50</option></select></div></div>
+<label for="desc">Patient / contact notes (optional, shared minimally)</label><textarea id="desc" maxlength="1000" rows="3"></textarea>
+<p><button class="btn" id="b">Send request</button></p><div id="out" aria-live="polite"></div></form>
+<div><div id="map" role="application" aria-label="Map"></div><p id="mapmsg" style="color:#475569;font-size:.9rem">Search a hospital or click the map to set the location. You can also type coordinates.</p></div></div></main><div id="foot"></div>
+<script>
+if(requireAuth()){fillBG($("#bg"));let marker;
+const setLL=(la,ln,map)=>{$("#lat").value=la.toFixed(6);$("#lng").value=ln.toFixed(6);
+ if(!map)return;const p={lat:la,lng:ln};map.setCenter(p);map.setZoom(14);
+ if(marker)marker.setMap(null);marker=new google.maps.Marker({position:p,map,animation:google.maps.Animation.DROP});};
+loadMaps().then(()=>{const map=new google.maps.Map($("#map"),{center:{lat:20,lng:0},zoom:2});
+ const ac=new google.maps.places.Autocomplete($("#hosp"),{fields:["geometry","name"],types:["hospital","establishment"]});
+ ac.addListener("place_changed",()=>{const p=ac.getPlace();if(p.geometry)setLL(p.geometry.location.lat(),p.geometry.location.lng(),map);else toast("Invalid location, pick a suggestion.","error");});
+ map.addListener("click",e=>setLL(e.latLng.lat(),e.latLng.lng(),map));
+}).catch(e=>{$("#mapmsg").textContent="Map unavailable ("+e.message+"). Enter coordinates manually.";});
+$("#f").addEventListener("submit",async e=>{e.preventDefault();$("#b").disabled=true;
+ try{const j=await api("/api/requests",{method:"POST",body:{blood_group:$("#bg").value,units_required:+$("#units").value,
+  latitude:+$("#lat").value,longitude:+$("#lng").value,hospital_name:$("#hosp").value,emergency_level:$("#lvl").value,
+  radius_km:+$("#rad").value,description:$("#desc").value||null}});
+  const ids=JSON.parse(localStorage.bl_reqs||"[]");ids.unshift(j.data.id);localStorage.bl_reqs=JSON.stringify(ids.slice(0,30));
+  $("#out").innerHTML=`<div class="notice"><b>Request #${j.data.id} created.</b> ${esc(j.message)} <br>Matched donors: <b>${j.data.matched_donors}</b> · <a href="dashboard.html">Track status</a></div>`;
+  toast(j.message,j.data.matched_donors?"success":"info");
+ }catch(err){toast(err.message,"error");}$("#b").disabled=false;});}
+</script></body></html>
