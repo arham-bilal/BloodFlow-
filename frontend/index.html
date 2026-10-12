@@ -915,7 +915,7 @@ const cv=document.createElement("canvas");cv.id="hb";cv.setAttribute("aria-hidde
 const x=cv.getContext("2d"),RM=matchMedia("(prefers-reduced-motion:reduce)").matches;
 let W,H;const rs=()=>{const d=Math.min(devicePixelRatio||1,1.5);W=innerWidth;H=innerHeight;cv.width=W*d;cv.height=H*d;x.setTransform(d,0,0,d,0,0)};addEventListener("resize",rs);rs();
 const C=["255,77,99","255,138,76","255,110,150","224,24,45","255,170,120"];
-const HS=Array.from({length:innerWidth<860?14:30},(_,i)=>({x:Math.random()*W,y:Math.random()*H,s:7+Math.random()*20,v:8+Math.random()*22,w:Math.random()*6.28,a:.1+Math.random()*.22,c:C[i%5],o:i%4===0,p:Math.random()}));
+const HS=Array.from({length:0},(_,i)=>({x:Math.random()*W,y:Math.random()*H,s:7+Math.random()*20,v:8+Math.random()*22,w:Math.random()*6.28,a:.1+Math.random()*.22,c:C[i%5],o:i%4===0,p:Math.random()}));
 const heart=(X,Y,s)=>{x.beginPath();x.moveTo(X,Y+s*.35);x.bezierCurveTo(X-s*1.1,Y-s*.35,X-s*.55,Y-s,X,Y-s*.4);x.bezierCurveTo(X+s*.55,Y-s,X+s*1.1,Y-s*.35,X,Y+s*.35);x.closePath()};
 const bp=u=>Math.exp(-(((u-.1)/.06)**2))+.5*Math.exp(-(((u-.3)/.08)**2));
 let last=performance.now(),t=0;
@@ -925,5 +925,142 @@ for(const h of HS){if(!RM){h.y-=h.v*dt;if(h.y<-h.s*2){h.y=H+h.s*2;h.x=Math.rando
 const s=h.s*(1+.12*bp(((t+h.p)%1.1)/1.1));heart(h.x+Math.sin(t*.6+h.w)*14,h.y,s);
 if(h.o){x.strokeStyle="rgba("+h.c+","+(h.a+.12)+")";x.lineWidth=1.5;x.stroke()}else{x.fillStyle="rgba("+h.c+","+h.a+")";x.fill()}}
 window.__hud&&__hud(t,bp((t%1.1)/1.1))})(last);
+})();
+</script>
+<style>
+:root{--bg:#fff}
+html,body{background:#fff!important}
+body::before,#hb,#gl,.grain{display:none!important}
+header.top{background:rgba(255,255,255,.94)}
+.glass{background:#fff!important;border:1px solid #f1dcdc!important;box-shadow:0 12px 34px rgba(42,12,20,.07)!important}
+#navr a[href="#how"],#navr a[href="#tech"],#navr a[href="#explorer"]{display:none}
+.rv2{opacity:0;transform:translateY(26px);transition:opacity .8s var(--ease),transform .8s var(--ease)}.rv2.in{opacity:1;transform:none}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:14px}.fg .full{grid-column:1/-1}
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-top:28px}
+.gw{padding:14px 16px;border:1px solid rgba(224,24,45,.2);border-radius:16px;background:#fff;cursor:pointer;font:700 14px "Plus Jakarta Sans";color:var(--ink);transition:.25s var(--ease)}
+.gw:hover{transform:translateY(-2px)}.gw.on{border-color:var(--red);box-shadow:0 0 0 3px rgba(224,24,45,.14)}
+.alloc{display:flex;height:12px;border-radius:99px;overflow:hidden;margin-top:12px}
+.msg{margin-top:16px;padding:14px 16px;border-radius:14px;background:#fff5f3;color:var(--mute);font-size:14px;line-height:1.6;text-align:left}
+.ft{background:#1a0a10;color:#d9c3c8;font-size:14px;line-height:1.7;padding:0 24px 28px;text-align:left}
+.ft a{color:#d9c3c8}.ft a:hover{color:#fff}
+.ft .hot{margin:0 -24px 44px;padding:18px 24px;background:linear-gradient(90deg,#e0182d,#ff4d63);color:#fff;display:flex;gap:16px;justify-content:center;align-items:center;flex-wrap:wrap;font-weight:700}
+.ft .hot a{background:#fff;color:#c70f25;padding:10px 20px;border-radius:99px;font-weight:800}
+.ft .cols{max-width:1180px;margin:auto;display:grid;grid-template-columns:1.5fr 1fr 1.2fr 1.4fr;gap:34px}
+.ft h4{color:#fff;margin:0 0 14px;font-size:15px}.ft ul{list-style:none;margin:0;padding:0}.ft li{margin-bottom:8px}
+.ft .soc{display:flex;gap:10px;margin-top:16px}.ft .soc a{width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.25);display:grid;place-items:center}.ft .soc svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ft .nl{display:flex;gap:8px;margin-top:10px}.ft .nl input{flex:1;min-width:0;background:#2a1219;border:1px solid #4a2a33;color:#fff;padding:12px;border-radius:12px;font:inherit}
+.ft .bot{max-width:1180px;margin:34px auto 0;padding-top:20px;border-top:1px solid rgba(255,255,255,.12);display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;font-size:13px}
+@media(max-width:860px){.fg{grid-template-columns:1fr}.ft .cols{grid-template-columns:1fr 1fr}}@media(max-width:560px){.ft .cols{grid-template-columns:1fr}}
+</style>
+<script>
+(()=>{
+const PK={"Punjab":{"Lahore":[31.5204,74.3587],"Rawalpindi":[33.5651,73.0169],"Faisalabad":[31.4504,73.135],"Multan":[30.1575,71.5249]},"Sindh":{"Karachi":[24.8607,67.0011],"Hyderabad":[25.396,68.3578],"Sukkur":[27.7052,68.8574]},"Khyber Pakhtunkhwa":{"Peshawar":[34.0151,71.5249],"Abbottabad":[34.1688,73.2215],"Mardan":[34.1989,72.0231]},"Balochistan":{"Quetta":[30.1798,66.975],"Gwadar":[25.1216,62.3254]},"Islamabad Capital Territory":{"Islamabad":[33.6844,73.0479]},"Gilgit-Baltistan":{"Gilgit":[35.9208,74.308]},"Azad Kashmir":{"Muzaffarabad":[34.37,73.4711]}};
+const CITY=Object.values(PK).flatMap(p=>Object.keys(p)),opt=a=>a.map(x=>`<option>${x}</option>`).join("");
+const authed=()=>!!localStorage.getItem("bl_token");
+/* hero CTAs + stat labels */
+const hb=document.querySelectorAll(".hero .btn");if(hb[1]){hb[0].textContent="Donate Blood";hb[1].textContent="Request Blood";hb[1].setAttribute("href","#request")}
+const sl={"Registered donors":"Active donors","Blood requests":"Requests created","Fulfilled":"Successful donations"};
+document.querySelectorAll(".stat span").forEach(s=>{if(sl[s.textContent])s.textContent=sl[s.textContent]});
+$("#navr").insertAdjacentHTML("afterbegin",'<a href="#request">Request blood</a><a href="#fund">Donate money</a><a href="#eligibility">Eligibility</a>');
+
+/* live feed with filters */
+$("#feed").style.display="none";
+$("#feed").insertAdjacentHTML("beforebegin",`<div class="fg" style="max-width:520px;margin:26px auto 0;text-align:left"><div><label class="l" for="ffc">City</label><select class="fld" id="ffc"><option value="">All cities</option>${opt(CITY)}</select></div><div><label class="l" for="ffg">Blood group</label><select class="fld" id="ffg"><option value="">All groups</option>${opt(BG)}</select></div></div><div id="feed2" class="feed" aria-live="polite"><div class="skel"></div><div class="skel"></div></div>`);
+let FD=[];const cityOf=h=>CITY.find(c=>h.toLowerCase().includes(c.toLowerCase()))||(/aga khan|liaquat|jinnah|civil|dow|indus|ziauddin|south city/i.test(h)?"Karachi":"");
+function drawFeed(){const c=$("#ffc").value,g=$("#ffg").value,l=FD.filter(r=>(!c||cityOf(r.hospital)===c)&&(!g||r.blood_group===g));
+$("#feed2").innerHTML=l.length?l.map(r=>`<div class="glass fc tilt3d"><div class="bg-tag lvl-${esc(r.level)}">${esc(r.blood_group)}</div><div style="min-width:0"><h3>${esc(r.hospital)}</h3><small>${+r.units} unit(s) · ${esc(r.level)} · ${+r.matched} matched</small>${localStorage.bl_role==="donor"?`<br><a href="respond.html?request=${+r.id}">I can help</a>`:""}</div></div>`).join(""):'<div class="glass card" style="grid-column:1/-1;color:var(--mute)">No requests match these filters. Clear them or <a class="lnk" href="#request">create a request</a>.</div>'}
+$("#ffc").onchange=drawFeed;$("#ffg").onchange=drawFeed;
+api("/api/statistics/feed").then(j=>{FD=j.data||[];drawFeed()}).catch(()=>{$("#feed2").innerHTML='<div class="glass card" style="grid-column:1/-1;color:var(--mute)">Live feed is unavailable right now.</div>'});
+
+/* new sections */
+const hd=(e,t,s)=>`<p class="eyebrow rv2">${e}</p><h2 class="h-lg rv2" style="margin-top:16px">${t}</h2><p class="lead rv2" style="margin:14px auto 0">${s}</p>`;
+$("#search").insertAdjacentHTML("afterend",`
+<section id="request" class="sec"><div class="wrap"><div class="col">${hd("Blood request","Request blood in one form.","Compatible donors near the hospital are alerted. You need a requester account.")}
+<form id="rq" class="glass card rv2" novalidate style="margin-top:28px"><div class="fg">
+<div><label class="l" for="qn">Full name</label><input class="fld" id="qn" required minlength="2" maxlength="100" autocomplete="name"></div>
+<div><label class="l" for="qp">Phone / WhatsApp</label><input class="fld" id="qp" type="tel" required pattern="\\+?[0-9 \\-]{7,20}" placeholder="+92 300 1234567"></div>
+<div class="full"><label class="l" for="qe">Email</label><input class="fld" id="qe" type="email" required autocomplete="email"></div>
+<div><label class="l" for="qco">Country</label><select class="fld" id="qco"><option>Pakistan</option></select></div>
+<div><label class="l" for="qpr">Province / State</label><select class="fld" id="qpr">${opt(Object.keys(PK))}</select></div>
+<div><label class="l" for="qct">City</label><select class="fld" id="qct"></select></div>
+<div><label class="l" for="qh">Hospital / medical centre</label><input class="fld" id="qh" required minlength="2" maxlength="120"></div>
+<div class="full"><label class="l" for="qa">Hospital address</label><input class="fld" id="qa" required maxlength="200"></div>
+<div class="full"><span class="l" id="qbl">Blood type required</span><div id="qbg" class="chips" role="radiogroup" aria-labelledby="qbl"></div></div>
+<div><label class="l" for="qu">Units</label><input class="fld" id="qu" type="number" min="1" max="10" value="1" required></div>
+<div><label class="l" for="qur">Urgency</label><select class="fld" id="qur"><option>Emergency</option><option>High</option><option>Normal</option></select></div>
+<div><label class="l" for="qd">Date required</label><input class="fld" id="qd" type="date" required></div>
+<div><label class="l" for="qr">Search radius</label><select class="fld" id="qr"><option value="5">5 km</option><option value="10" selected>10 km</option><option value="20">20 km</option><option value="50">50 km</option></select></div>
+<div class="full"><label class="l" for="qno">Notes / medical reason (optional)</label><textarea class="fld" id="qno" rows="3" maxlength="400"></textarea></div></div>
+<label class="chk"><input type="checkbox" id="qc"><span>I confirm this request is genuine. I understand BloodLink only alerts donors, and the hospital blood bank confirms compatibility and eligibility.</span></label>
+<button class="btn" style="width:100%;margin-top:22px">Send request</button><div id="qm" class="msg hidden" aria-live="polite"></div></form></div></div></section>
+
+<section id="eligibility" class="sec"><div class="wrap"><div class="col" style="max-width:640px!important">${hd("Eligibility","Can I donate? Quick check.","General guidance only. A blood bank makes the real decision.")}
+<form id="el" class="glass card rv2" style="margin-top:28px"><div class="fg"><div><label class="l" for="ea">Age</label><input class="fld" id="ea" type="number" min="1" max="120" required></div><div><label class="l" for="ew">Weight (kg)</label><input class="fld" id="ew" type="number" min="20" max="250" required></div>
+<div class="full"><label class="l" for="ed">Last donation date (leave empty if never)</label><input class="fld" id="ed" type="date"></div></div>
+<label class="chk"><input type="checkbox" id="eh"><span>I feel healthy today (no fever, cold or infection).</span></label>
+<button class="btn" style="width:100%;margin-top:20px">Check eligibility</button><div id="er" class="msg hidden" aria-live="polite"></div></form></div></div></section>
+
+<section id="fund" class="sec"><div class="wrap"><div class="col" style="max-width:720px!important">${hd("Financial support","Support with money.","Fund blood bag kits, screening tests and awareness camps.")}
+<form id="fd" class="glass card rv2" style="margin-top:28px"><span class="l">Amount (PKR)</span><div id="fam" class="chips"></div>
+<input class="fld mt" id="fcu" type="number" min="100" placeholder="Custom amount (min 100)" aria-label="Custom amount">
+<div class="mt"><span class="l">Frequency</span><div class="seg" role="group" aria-label="Frequency"><button type="button" aria-pressed="true" data-f="One-time">One-time</button><button type="button" aria-pressed="false" data-f="Monthly">Monthly</button></div></div>
+<div class="mt"><span class="l">Purpose</span><div id="fpu" class="chips"></div></div>
+<div class="mt"><span class="l">Illustrative split of funds</span><div class="alloc" role="img" aria-label="40 percent blood bag kits, 30 percent screening, 20 percent camps, 10 percent operations"><i style="width:40%;background:#e0182d"></i><i style="width:30%;background:#ff4d63"></i><i style="width:20%;background:#ff8a4c"></i><i style="width:10%;background:#ffc2a1"></i></div><p class="hint">Kits 40% · Screening 30% · Camps 20% · Operations 10%. Replace with your real budget.</p></div>
+<div class="mt"><span class="l">Payment method</span><div class="sg" id="fgw" style="margin-top:6px"></div><div id="fgi" class="msg"></div></div>
+<button class="btn" style="width:100%;margin-top:22px">Donate</button><div id="fok" class="msg hidden" aria-live="polite"></div></form>
+<p class="hint">Demo only. No payment is processed and no card details are collected here. Real donations need a registered organisation and a licensed gateway.</p></div></div></section>
+
+<section id="voices" class="sec"><div class="wrap"><div class="col" style="max-width:1000px!important">${hd("Stories","What people say.","Sample testimonials with fictional names, for design preview.")}
+<div class="sg">${[["Hira S.","Lahore","Found an O negative donor for my father within an hour."],["Bilal C.","Karachi","My address stays private and I choose when I am available."],["Dr. Sana M.","Islamabad","Quick way to reach donors. Our blood bank still confirms eligibility."]].map(t=>`<div class="glass card rv2" style="text-align:left"><div style="color:#f59e0b">★★★★★</div><p style="margin:12px 0;color:var(--mute);font-size:14px">${t[2]}</p><b style="color:var(--ink)">${t[0]}</b> <small>${t[1]}</small></div>`).join("")}</div></div></div></section>`);
+
+/* request form */
+const fillC=()=>{$("#qct").innerHTML=opt(Object.keys(PK[$("#qpr").value]))};$("#qpr").onchange=fillC;fillC();
+function pick(el,items,cb){el.innerHTML=items.map(g=>`<button type="button" class="chip" role="radio" aria-checked="false" data-g="${g}">${g}</button>`).join("");
+el.onclick=e=>{const b=e.target.closest(".chip");if(!b)return;el.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-checked",String(c===b)));el.dataset.v=b.dataset.g;cb&&cb(b.dataset.g)}}
+pick($("#qbg"),BG);
+$("#rq").addEventListener("submit",async e=>{e.preventDefault();const m=$("#qm"),f=e.target;m.classList.remove("hidden");
+if(!f.checkValidity())return f.reportValidity();
+if(!$("#qbg").dataset.v)return toast("Pick the blood type needed","error");
+if(!$("#qc").checked)return toast("Please confirm the request is genuine","error");
+if(!authed()||!["requester","admin"].includes(localStorage.bl_role)){m.innerHTML='Please <a class="lnk" href="login.html?next=index.html">log in</a> or <a class="lnk" href="register.html">register</a> with a requester account to send this request.';return}
+const [la,ln]=PK[$("#qpr").value][$("#qct").value],v=i=>$("#"+i).value.trim();
+const desc=[`Requester: ${v("qn")}`,`Phone: ${v("qp")}`,`Email: ${v("qe")}`,`Needed by: ${v("qd")}`,`Address: ${v("qa")}`,v("qno")&&`Notes: ${v("qno")}`].filter(Boolean).join("\n").slice(0,1000);
+try{const j=await api("/api/requests",{method:"POST",body:{blood_group:$("#qbg").dataset.v,units_required:+v("qu"),latitude:la,longitude:ln,hospital_name:`${v("qh")}, ${$("#qct").value}`.slice(0,200),emergency_level:{Emergency:"critical",High:"urgent",Normal:"normal"}[v("qur")],description:desc,radius_km:+v("qr")}});
+m.innerHTML=`<b>Request #${+j.data.id} created.</b> ${esc(j.message)} Matched donors: <b>${+j.data.matched_donors}</b>. <a class="lnk" href="dashboard.html">Track status</a>`;toast("Request sent","success")}catch(err){m.textContent=err.message;toast(err.message,"error")}});
+
+/* eligibility */
+$("#el").addEventListener("submit",e=>{e.preventDefault();const age=+$("#ea").value,w=+$("#ew").value,d=$("#ed").value,r=[];
+if(age<18||age>65)r.push("Age should usually be between 18 and 65.");if(w<50)r.push("Weight should be at least 50 kg.");
+if(d){const days=(Date.now()-new Date(d))/864e5;if(days<90)r.push(`Wait about ${Math.ceil(90-days)} more days since your last donation.`)}
+if(!$("#eh").checked)r.push("You should feel healthy today.");
+const o=$("#er");o.classList.remove("hidden");o.innerHTML=r.length?`<b>Not yet.</b><ul style="margin:8px 0 0;padding-left:18px">${r.map(x=>`<li>${x}</li>`).join("")}</ul>Please ask a blood bank or doctor.`:'<b style="color:#0f9f6e">You may be able to donate.</b> A blood bank will confirm with a proper health screening.'});
+
+/* financial donation (demo) */
+let amt=1000,freq="One-time",pur="Blood bag kits",gw="Credit / debit card";
+pick($("#fam"),["500","1000","2500","5000","10000"],v=>{amt=+v;$("#fcu").value=""});$("#fam").querySelector('[data-g="1000"]').click();
+$("#fcu").oninput=e=>{if(e.target.value){amt=+e.target.value;$("#fam").querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-checked","false"))}};
+pick($("#fpu"),["Blood bag kits","Screening tests","Awareness camps","Emergency fund"],v=>pur=v);$("#fpu").querySelector(".chip").click();
+document.querySelectorAll("#fd .seg button").forEach(b=>b.onclick=()=>{freq=b.dataset.f;document.querySelectorAll("#fd .seg button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)))});
+const GW={"Credit / debit card":"You will be sent to the gateway's secure page. Never type card details on this site.","Bank transfer":"Account title and IBAN: EDIT these with your organisation's details.","JazzCash":"Merchant number: EDIT with your JazzCash merchant details.","Easypaisa":"Merchant number: EDIT with your Easypaisa merchant details."};
+$("#fgw").innerHTML=Object.keys(GW).map((k,i)=>`<button type="button" class="gw${i?"":" on"}">${k}</button>`).join("");$("#fgi").textContent=GW[gw];
+$("#fgw").onclick=e=>{const b=e.target.closest(".gw");if(!b)return;gw=b.textContent;$("#fgw").querySelectorAll(".gw").forEach(x=>x.classList.toggle("on",x===b));$("#fgi").textContent=GW[gw]};
+$("#fd").addEventListener("submit",e=>{e.preventDefault();if(!(amt>=100))return toast("Enter at least PKR 100","error");
+const o=$("#fok");o.classList.remove("hidden");o.innerHTML=`<b>Thank you!</b> Summary: PKR ${amt.toLocaleString("en-PK")} · ${freq} · ${esc(pur)} · ${esc(gw)}.<br>Demo only: no payment was taken.`;toast("Demo donation recorded locally","success")});
+
+/* footer */
+const sv=p=>`<svg viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;
+document.querySelector("footer").outerHTML=`<footer class="ft"><div class="hot"><span>Emergency? Call Rescue 1122 first, then send a blood request.</span><a href="tel:1122">Call 1122</a></div>
+<div class="cols"><div id="about-us"><h4>BloodLink</h4><p>Our mission is to connect people who need blood with willing, nearby donors, quickly and privately.</p>
+<div class="soc"><a href="#" aria-label="Facebook">${sv('<path d="M14 9h3V5h-3a4 4 0 0 0-4 4v2H7v4h3v6h4v-6h3l1-4h-4V9z"/>')}</a><a href="#" aria-label="Instagram">${sv('<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".6"/>')}</a><a href="#" aria-label="X">${sv('<path d="M4 4l16 16M20 4L4 20"/>')}</a><a href="#" aria-label="WhatsApp">${sv('<path d="M3 21l1.6-5A8.5 8.5 0 1 1 8 19.4z"/>')}</a></div></div>
+<div><h4>Quick links</h4><ul><li><a href="#home">Home</a></li><li><a href="#register">Donate Blood</a></li><li><a href="#search">Find Donor</a></li><li><a href="#fund">Financial Support</a></li><li><a href="#about-us">About Us</a></li><li><a href="#contact">Contact Us</a></li></ul></div>
+<div id="contact"><h4>Contact</h4><ul><li>Address: EDIT your address, city</li><li>Email: <a href="mailto:support@example.com">support@example.com</a></li><li>Phone: <a href="tel:+920000000000">+92 000 0000000</a></li><li>Emergency: <a href="tel:1122">Rescue 1122</a></li></ul></div>
+<div><h4>Stay updated on blood drives</h4><form id="nlf" class="nl"><input id="nle" type="email" required placeholder="you@email.com" aria-label="Email for newsletter"><button class="btn" style="padding:12px 18px">Join</button></form><p style="font-size:12px;margin-top:8px;opacity:.7">Demo form. Connect it to your email service.</p></div></div>
+<div class="bot"><span>© ${new Date().getFullYear()} BloodLink. All rights reserved. Designed &amp; engineered by YOUR NAME</span><span><a href="#">Privacy Policy</a> · <a href="#">Terms of Service</a> · <a href="#medical">Medical Disclaimer</a></span></div>
+<p id="medical" style="max-width:1180px;margin:18px auto 0;font-size:12px;opacity:.75">Medical disclaimer: BloodLink is a matching and communication platform. It does not replace medical professionals or blood-bank procedures and cannot guarantee blood availability. Always verify compatibility and donor eligibility with qualified medical staff.</p></footer>`;
+$("#nlf").addEventListener("submit",e=>{e.preventDefault();e.target.reset();toast("Thanks! (demo form, not saved)","success")});
+
+/* reveal for new sections */
+const io=new IntersectionObserver(es=>es.forEach(x=>{if(x.isIntersecting){x.target.classList.add("in");io.unobserve(x.target)}}),{threshold:.12});
+document.querySelectorAll(".rv2").forEach(el=>io.observe(el));
 })();
 </script>
