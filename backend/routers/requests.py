@@ -48,6 +48,11 @@ def get_request(request_id: int, db: Session = Depends(get_db), user: User = Dep
     if not req:
         raise HTTPException(404, "Request not found")
     is_owner = user.id == req.requester_id or user.role == "admin"
+    is_matched_donor = user.role == "donor" and db.scalar(
+        select(Match.id).join(Donor, Donor.id == Match.donor_id).where(
+            Match.request_id == req.id, Donor.user_id == user.id)) is not None
+    if not is_owner and not is_matched_donor:
+        raise HTTPException(404, "Request not found")
     rows = db.execute(select(Match, Donor, User).join(Donor, Donor.id == Match.donor_id)
                       .join(User, User.id == Donor.user_id).where(Match.request_id == req.id)).all()
     data = {"id": req.id, "blood_group": req.blood_group, "units_required": req.units_required,

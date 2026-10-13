@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     DEFAULT_RADIUS_KM: float = 10
     MIN_DAYS_BETWEEN_DONATIONS: int = 90  # simple cool-off, NOT a medical eligibility check
     JWT_EXPIRE_MIN: int = 60
+    CREATE_TABLES: bool = False
+    API_DOCS_ENABLED: bool = True
     model_config = SettingsConfigDict(env_file=".env")
 
 settings = Settings()

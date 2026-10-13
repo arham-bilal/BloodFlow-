@@ -11,7 +11,13 @@ from security import limiter
 from routers import auth, donors, requests, admin
 
 logging.basicConfig(level=logging.INFO)
-app = FastAPI(title="BloodLink API", version="0.1.0")
+app = FastAPI(
+    title="BloodLink API",
+    version="0.1.0",
+    docs_url="/docs" if settings.API_DOCS_ENABLED else None,
+    redoc_url="/redoc" if settings.API_DOCS_ENABLED else None,
+    openapi_url="/openapi.json" if settings.API_DOCS_ENABLED else None,
+)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(CORSMiddleware, allow_origins=settings.CORS_ORIGINS.split(","),
@@ -22,7 +28,8 @@ app.include_router(admin.public)
 
 @app.on_event("startup")
 def init_db():
-    Base.metadata.create_all(engine)  # dev only; use Alembic migrations in production
+    if settings.CREATE_TABLES:
+        Base.metadata.create_all(engine)  # migrations are preferred outside local development
 
 @app.exception_handler(SQLAlchemyError)
 async def db_error(request: Request, exc: SQLAlchemyError):

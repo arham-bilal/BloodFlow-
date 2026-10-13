@@ -15,6 +15,8 @@ with SessionLocal() as db:
         pw = getpass.getpass("Password (min 8 chars): ")
         if len(pw) < 8:
             raise SystemExit("Password too short")
+        if len(pw.encode("utf-8")) > 72:
+            raise SystemExit("Password must be at most 72 bytes")
         db.add(User(name="Admin", email=email, role="admin", password_hash=hash_password(pw)))
     db.commit()
 print("Done:", email, "is now admin")
