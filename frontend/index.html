@@ -1049,7 +1049,7 @@ document.querySelector("footer").outerHTML=`<footer class="ft"><div class="hot">
 <div class="cols"><div id="about-us"><h4>BloodLink</h4><p>Our mission is to connect people who need blood with willing, nearby donors, quickly and privately.</p>
 <div class="soc"><a href="#" aria-label="Facebook">${sv('<path d="M14 9h3V5h-3a4 4 0 0 0-4 4v2H7v4h3v6h4v-6h3l1-4h-4V9z"/>')}</a><a href="#" aria-label="Instagram">${sv('<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".6"/>')}</a><a href="#" aria-label="X">${sv('<path d="M4 4l16 16M20 4L4 20"/>')}</a><a href="#" aria-label="WhatsApp">${sv('<path d="M3 21l1.6-5A8.5 8.5 0 1 1 8 19.4z"/>')}</a></div></div>
 <div><h4>Quick links</h4><ul><li><a href="#home">Home</a></li><li><a href="#register">Donate Blood</a></li><li><a href="#search">Find Donor</a></li><li><a href="#fund">Financial Support</a></li><li><a href="#about-us">About Us</a></li><li><a href="#contact">Contact Us</a></li></ul></div>
-<div id="contact"><h4>Contact</h4><ul><li>Address: EDIT your address, city</li><li>Email: <a href="mailto:support@example.com">support@example.com</a></li><li>Phone: <a href="tel:+920000000000">+92 000 0000000</a></li><li>Emergency: <a href="tel:1122">Rescue 1122</a></li></ul></div>
+<div id="contact"><h4>Contact</h4><ul><li>Address: EDIT your address, city</li><li>Email: <a href="mailto:mailbackup430@gmail.com">mailbackup430@gmail.com</a></li><li>Phone: <a href="tel:+920000000000">+92 000 0000000</a></li><li>Emergency: <a href="tel:1122">Rescue 1122</a></li></ul></div>
 <div><h4>Stay updated on blood drives</h4><form id="nlf" class="nl"><input id="nle" type="email" required placeholder="you@email.com" aria-label="Email for newsletter"><button class="btn" style="padding:12px 18px">Join</button></form><p style="font-size:12px;margin-top:8px;opacity:.7">Demo form. Connect it to your email service.</p></div></div>
 <div class="bot"><span>© ${new Date().getFullYear()} BloodLink. All rights reserved. Designed &amp; engineered by YOUR NAME</span><span><a href="#">Privacy Policy</a> · <a href="#">Terms of Service</a> · <a href="#medical">Medical Disclaimer</a></span></div>
 <p id="medical" style="max-width:1180px;margin:18px auto 0;font-size:12px;opacity:.75">Medical disclaimer: BloodLink is a matching and communication platform. It does not replace medical professionals or blood-bank procedures and cannot guarantee blood availability. Always verify compatibility and donor eligibility with qualified medical staff.</p></footer>`;
@@ -1058,5 +1058,61 @@ $("#nlf").addEventListener("submit",e=>{e.preventDefault();e.target.reset();toas
 /* reveal for new sections */
 const io=new IntersectionObserver(es=>es.forEach(x=>{if(x.isIntersecting){x.target.classList.add("in");io.unobserve(x.target)}}),{threshold:.12});
 document.querySelectorAll(".rv2").forEach(el=>io.observe(el));
+})();
+</script>
+<style>
+:root{--soft:#6a4852}
+.fld::placeholder{color:#8a6a73}
+.ticker{background:#b3122a}
+.btn:not(.ghost):not(.white),#navr a.cta,.seg button[aria-pressed=true],.chip[aria-checked=true],.step em{background:linear-gradient(135deg,#d3152b,#a80f22)!important}
+:focus-visible{outline:3px solid #1a56db!important;outline-offset:3px}
+.sk{position:absolute;left:-999px}.sk:focus{left:12px;top:12px;z-index:500;background:#fff;color:#000;padding:10px 16px;border-radius:10px}
+#ck{position:fixed;left:16px;right:16px;bottom:16px;z-index:400;max-width:620px;padding:18px 20px;background:#fff;border:1px solid #f1dcdc;border-radius:18px;box-shadow:0 18px 50px rgba(42,12,20,.2);font-size:14px;line-height:1.6;color:var(--ink)}
+#ck div{display:flex;gap:10px;margin-top:12px}#ck button{padding:10px 18px;font-size:14px}
+dialog.lg{width:min(720px,94vw);max-height:86vh;border:0;border-radius:20px;padding:0;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+dialog.lg::backdrop{background:rgba(0,0,0,.55)}
+dialog.lg .in{padding:26px 28px;overflow:auto;max-height:86vh;line-height:1.7;font-size:14px;color:#3b2229}
+dialog.lg h2{font-size:24px;margin:0 0 8px;color:var(--ink)}dialog.lg h3{font-size:15px;margin:18px 0 4px;color:var(--ink)}dialog.lg ul{padding-left:18px;margin:6px 0}
+.cons{display:flex;gap:10px;font-size:12.5px;line-height:1.6;margin-top:16px;cursor:pointer;color:var(--mute);text-align:left}.cons input{margin-top:3px;accent-color:#e0182d}
+</style>
+<script>
+(()=>{
+const BN="Blood Bank",CO="Shaheryar Saqib / ORGANISATION",AD="Karachi, Pakistan",EM="mailbackup@gmail.com",PH="+92 000 0000000";
+/* fake reviews hatao, daave naram karo */
+document.getElementById("voices")?.remove();
+const hl=document.querySelector(".hero .lead");if(hl)hl.textContent=BN+" finds compatible donors near the hospital, alerts them by email and shows you who accepted.";
+const cl=document.querySelector(".cta-card .lead");if(cl)cl.textContent="Send an emergency request and compatible donors nearby are alerted by email.";
+/* skip link */
+if(!document.querySelector(".sk")){document.body.insertAdjacentHTML("afterbegin",'<a class="sk" href="#main">Skip to content</a>');const m=document.querySelector("main");if(m&&!m.id)m.id="main"}
+/* legal pages */
+const T={
+p:["Privacy Policy",`<h3>Who we are</h3><p>${CO}, ${AD}. Contact: ${EM}, ${PH}.</p>
+<h3>Data we collect</h3><ul><li>Account: name, email, phone (optional), password (stored hashed).</li><li>Donors: blood group, approximate location, availability, last donation date.</li><li>Requests: details you enter (name, phone, email, hospital, address, notes).</li><li>Technical: a login token in your browser and server logs (IP) for security and abuse prevention.</li></ul>
+<h3>Why we use it</h3><p>To match donors and requests, send alerts, keep the service secure and keep an audit log.</p>
+<h3>Who sees it</h3><ul><li>Donors see only the request details needed (hospital, blood group, urgency).</li><li>A requester sees a donor's name and phone only after the donor accepts.</li><li>Service providers: email delivery (Resend), maps (Google Maps, only if used), fonts (Google Fonts).</li></ul>
+<h3>Retention and your rights</h3><p>We keep data while your account is active (EDIT: retention period). You may ask to access, correct or delete your data, or withdraw consent, by emailing ${EM}.</p>
+<h3>Security</h3><p>Passwords are hashed and access is role-based. No system is completely secure.</p><h3>Children</h3><p>This service is for adults (18+).</p>`],
+t:["Terms of Service",`<h3>What this is</h3><p>${BN} is a matching and communication service. It is not a blood bank or a medical provider and does not guarantee blood availability.</p>
+<h3>Your responsibilities</h3><ul><li>Post only genuine requests and accurate information.</li><li>Do not buy or sell blood through this service.</li><li>Donors act voluntarily; a blood bank decides eligibility.</li></ul>
+<h3>Misuse</h3><p>We may suspend accounts that spam, impersonate or misuse the service.</p>
+<h3>Liability</h3><p>EDIT with your lawyer: limits of liability and governing law (country and city).</p>
+<h3>Refunds</h3><p>The money donation feature in this version is a demo and no payment is processed. If payments are enabled, refund terms will be published here.</p>`],
+c:["Cookie Policy",`<p>We do not use advertising or analytics cookies. We store only essential data in your browser: your login token and your notice choice. Google Fonts load from Google and may receive your IP address. If a map is used, Google Maps loads from Google.</p><p>If analytics or ads are ever added, we will ask for your consent first.</p>`],
+m:["Medical Disclaimer",`<p>${BN} is a matching and communication platform. It does not replace medical professionals or blood-bank procedures and cannot guarantee availability. Always verify blood compatibility and donor eligibility with qualified medical staff. In a life-threatening emergency call your local emergency number first (for example Rescue 1122).</p>`],
+r:["Refund Policy",`<p>No payments are processed in this version, so there is nothing to refund. If payments are enabled later, the refund terms will be published here before any payment is taken.</p>`]};
+document.body.insertAdjacentHTML("beforeend",'<dialog class="lg" id="lgd" aria-labelledby="lgt"><div class="in"><button type="button" id="lgx" aria-label="Close" style="float:right;border:0;background:none;font-size:28px;cursor:pointer;line-height:1">&times;</button><div id="lgb"></div></div></dialog>');
+const show=k=>{$("#lgb").innerHTML=`<h2 id="lgt">${T[k][0]}</h2><p><b>Template, not legal advice. Have a lawyer review before launch.</b></p>`+T[k][1];$("#lgd").showModal()};
+$("#lgx").onclick=()=>$("#lgd").close();$("#lgd").addEventListener("click",e=>{if(e.target.id==="lgd")$("#lgd").close()});
+const K={"Privacy Policy":"p","Terms of Service":"t","Cookie Policy":"c","Medical Disclaimer":"m","Refund Policy":"r"};
+document.addEventListener("click",e=>{const a=e.target.closest("a");if(!a)return;const k=K[a.textContent.trim()];if(k){e.preventDefault();show(k)}},true);
+const fb=document.querySelector(".ft .bot span:last-child");if(fb)fb.insertAdjacentHTML("beforeend",' · <a href="#">Cookie Policy</a> · <a href="#">Refund Policy</a>');
+/* form consent */
+const cons=id=>`<label class="cons"><input type="checkbox" id="${id}" required><span>I agree to the <a href="#" class="lnk">Privacy Policy</a> and <a href="#" class="lnk">Terms of Service</a>, and I consent to my data being used to match blood donors and requests.</span></label>`;
+document.querySelector("#regForm #rb")?.insertAdjacentHTML("beforebegin",cons("cs1"));
+document.querySelector("#rq button.btn")?.insertAdjacentHTML("beforebegin",cons("cs2"));
+/* cookie notice */
+let seen=false;try{seen=!!localStorage.getItem("bl_ck")}catch{}
+if(!seen){document.body.insertAdjacentHTML("beforeend",'<div id="ck" role="dialog" aria-label="Cookie notice"><b>Your privacy</b><br>We use only essential browser storage (to keep you logged in). No advertising or analytics tracking. Google Fonts load from Google. <a href="#" class="lnk">Cookie Policy</a><div><button class="btn" id="ckok">OK, got it</button></div></div>');
+$("#ckok").onclick=()=>{try{localStorage.setItem("bl_ck","1")}catch{}$("#ck").remove()}}
 })();
 </script>
