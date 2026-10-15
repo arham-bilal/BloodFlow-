@@ -352,12 +352,8 @@ footer .by{margin-top:14px;font-weight:700;color:var(--ink)}
     <form id="sf" class="glass card rv" novalidate style="height:fit-content">
       <span class="l" id="sbgl">Patient blood group</span>
       <div id="sbg" class="chips" role="radiogroup" aria-labelledby="sbgl"></div>
-      <div class="g2 mt">
-        <div><label class="l" for="slat">Latitude</label><input class="fld" id="slat" type="number" step="any" placeholder="31.5204"></div>
-        <div><label class="l" for="slng">Longitude</label><input class="fld" id="slng" type="number" step="any" placeholder="74.3587"></div>
-      </div>
       <div class="mt"><label class="l" for="srad">Radius</label><select class="fld" id="srad"><option value="5">5 km</option><option value="10" selected>10 km</option><option value="20">20 km</option><option value="50">50 km</option></select></div>
-      <div class="g2" style="margin-top:22px"><button class="btn mag" id="sb">Search</button><button type="button" class="btn ghost mag" id="sgeo">Use my location</button></div>
+      <div style="margin-top:22px"><button class="btn mag" id="sb" style="width:100%">Search</button></div>
     </form>
     <div class="rv" aria-live="polite" style="--d:120ms">
       <div id="compat" class="glass card" style="color:var(--mute);font-size:14px">Pick a blood group to see who can donate to that patient.</div>
@@ -574,7 +570,8 @@ void main(){
 
 <script>
 document.body.classList.remove("nojs");
-/* ======================= UI (uses $, api, esc, toast, countUp, logout, BG, DONORS_FOR from js/app.js) ======================= */
+document.body.classList.remove("nojs");
+/* ======================= UI ======================= */
 (function(){
 const authed=()=>!!localStorage.getItem("bl_token"),role=()=>localStorage.getItem("bl_role");
 
@@ -671,14 +668,13 @@ function showCompat(g){
   <p class="hint">Guide only. The hospital blood bank confirms compatibility.</p>`;
   window.BL&&BL.burst(.5);
 }
-$("#sgeo").onclick=async()=>{try{const c=await geo();$("#slat").value=c.latitude.toFixed(6);$("#slng").value=c.longitude.toFixed(6)}catch(e){toast(e.message,"error")}};
 $("#sf").addEventListener("submit",async e=>{
   e.preventDefault();
   const g=$("#sbg").dataset.v;if(!g)return toast("Pick a blood group first","error");
   const out=$("#sres");
   if(!authed()){out.innerHTML=`<div class="glass card" style="font-size:14px;color:var(--mute)">Donor counts near you are only shown to logged-in users to protect donor privacy. <a class="lnk" href="login.html?next=index.html">Login</a> or <a class="lnk" href="#register">register</a> to search.</div>`;return}
-  let la=$("#slat").value,ln=$("#slng").value;
-  if(!la||!ln){try{const c=await geo();la=c.latitude.toFixed(6);ln=c.longitude.toFixed(6);$("#slat").value=la;$("#slng").value=ln}catch{return toast("Allow location or enter latitude and longitude","error")}}
+  let la,ln;
+  try{const c=await geo();la=c.latitude.toFixed(6);ln=c.longitude.toFixed(6)}catch{return toast("Please allow location access to search","error")}
   out.innerHTML='<div class="skel"></div>';
   try{
     const q=new URLSearchParams({blood_group:g,lat:la,lng:ln,radius_km:$("#srad").value,available_only:true});
