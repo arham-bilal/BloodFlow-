@@ -9,7 +9,10 @@ from config import settings
 from database import get_db
 from models import User
 
-limiter = Limiter(key_func=get_remote_address)
+limiter = Limiter(
+    key_func=get_remote_address,
+    storage_uri=settings.RATE_LIMIT_STORAGE_URI,
+)
 bearer = HTTPBearer(auto_error=False)
 
 def hash_password(p: str) -> str:

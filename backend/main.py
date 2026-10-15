@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from sqlalchemy.exc import SQLAlchemyError
 from config import settings
 from database import Base, engine
@@ -22,6 +23,7 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(CORSMiddleware, allow_origins=[origin.strip() for origin in settings.CORS_ORIGINS.split(",") if origin.strip()],
                    allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=settings.FORWARDED_ALLOW_IPS)
 
 @app.middleware("http")
 async def security_headers(request: Request, call_next):

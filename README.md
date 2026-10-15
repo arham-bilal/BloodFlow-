@@ -18,3 +18,4 @@ Matching/communication platform only. Not a replacement for medical professional
 Migrations: `alembic init migrations`, set target_metadata=Base.metadata, `alembic revision --autogenerate -m init && alembic upgrade head`; leave `CREATE_TABLES` unset/false in production and apply migrations separately.
 Run `gunicorn -k uvicorn.workers.UvicornWorker main:app` behind HTTPS; set CORS_ORIGINS and `window.API_BASE` in each HTML page before app.js.
 Set `API_DOCS_ENABLED=false` in production to disable `/docs`, `/redoc`, and `/openapi.json`.
+Rate limiting uses in-memory storage by default (`RATE_LIMIT_STORAGE_URI=memory://`). For shared limits across workers, configure a Redis URI such as `RATE_LIMIT_STORAGE_URI=redis://localhost:6379/0`. Set `FORWARDED_ALLOW_IPS` to the proxy IPs/CIDRs (comma-separated) so rate limits use the original client IP from trusted `X-Forwarded-For` headers. Do not use `*` unless the app is reachable only through trusted proxies.

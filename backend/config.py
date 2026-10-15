@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     APP_BASE_URL: str = "http://localhost:5500"
     CORS_ORIGINS: str = "http://localhost:5500"
     DEFAULT_RADIUS_KM: float = 10
+    RATE_LIMIT_STORAGE_URI: str = "memory://"
+    FORWARDED_ALLOW_IPS: str = "127.0.0.1"
     MIN_DAYS_BETWEEN_DONATIONS: int = 90  # simple cool-off, NOT a medical eligibility check
     JWT_EXPIRE_MIN: int = 60
     CREATE_TABLES: bool = False
